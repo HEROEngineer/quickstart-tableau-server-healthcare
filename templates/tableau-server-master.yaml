@@ -332,8 +332,6 @@ Resources:
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
       Parameters:
-        
-      
 
   TableauStack:
     Type: AWS::CloudFormation::Stack

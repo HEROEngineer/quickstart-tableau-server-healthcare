@@ -1,0 +1,57 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for basic logging functionality
+
+Parameters:
+  LogBucketName:
+    Type: String
+    Default: ''
+    Description: Log bucket. If blank, will create a new bucket
+
+Conditions:
+  NoLogBucket: !Equals [ LogBucketName, '' ]
+
+Resources:
+  LogBucket:
+    Type: AWS::S3::Bucket
+    Condition: NoLogBucket
+    Properties:
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration:
+          ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+  LogBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ConfigBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Id: DeleteObjectPolicy
+        Statement:
+        - Sid: DenyDeleteObject
+          Effect: Deny
+          Principal: "*"
+          Action: "s3:DeleteObject"
+          Resource: !Sub arn:aws:s3:::${LogBucket}/*
+        - Sid: DenyDeleteBucket
+          Effect: Deny
+          Principal: "*"
+          Action: "s3:DeleteBucket"
+          Resource: !Sub arn:aws:s3:::${LogBucket}
+
+  ConfigRecorderEnabled:
+
+  ConfigDeliveryChannelEnabled:
+
+  ConfigRulesStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/config-rules.yaml
+      Parameters:
+        LogBucket: !If [ NoLogBucket, !Ref LogBucket, LogBucketName ]
+
+Output:
+  LogBucketName:
+    Value: !If [ NoLogBucket, !Ref LogBucket, LogBucketName ]

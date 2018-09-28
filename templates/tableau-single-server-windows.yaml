@@ -215,7 +215,7 @@ Resources:
     Properties:
       DesiredCapacity: 1
       HealthCheckType: ELB
-      LaunchConfigurationName: !Ref TableauLaunchConfiguration
+      LaunchConfigurationName: !Ref TableauLaunchConfig
       MaxSize: 1
       MinSize: 1
       TargetGroupARNs:
@@ -233,27 +233,32 @@ Resources:
         config:
           files:
             c:\tabsetup\secrets.json:
-              content:
-                local_admin_user: !Ref Username
-                local_admin_pass: !Ref Password
-                content_admin_user: !Ref TableauServerAdminUser
-                content_admin_pass: !Ref TableauServerAdminPassword
-                product_keys: 
-                - !If [ IsTrial, trial, !Ref TableauServerLicenseKey ]
+              content: !Sub 
+                - |
+                  {
+                    "local_admin_user": "${Username}",
+                    "local_admin_pass": "${Password}",
+                    "content_admin_user": "${TableauServerAdminUser}",
+                    "content_admin_pass": "${TableauServerAdminPassword}",
+                    "product_keys": "${TrialOrLicenseKey}"
+                  }
+                - TrialOrLicenseKey: !If [ IsTrial, trial, !Ref TableauServerLicenseKey ]
             c:\tabsetup\registration.json:
-              content:
-                first_name: !Ref RegFirstName
-                last_name: !Ref RegLastName
-                email: !Ref RegEmail
-                company: !Sub ${RegCompany};AWSQuickStart-WinBeta
-                title: !Ref RegTitle
-                department: !Ref RegDepartment
-                industry: !Ref RegIndustry
-                phone: !Ref RegPhone
-                city: !Ref RegCity
-                state: !Ref RegState
-                zip: !Ref RegZip
-                country: !Ref RegCountry
+              content: !Sub |
+                {
+                  "first_name": "${RegFirstName}",
+                  "last_name": "${RegLastName}",
+                  "email": "${RegEmail}",
+                  "company": "${RegCompany};AWSQuickStart-WinBeta",
+                  "title": "${RegTitle}",
+                  "department": "${RegDepartment}",
+                  "industry": "${RegIndustry}",
+                  "phone": "${RegPhone}",
+                  "city": "${RegCity}",
+                  "state": "${RegState}",
+                  "zip": "${RegZip}",
+                  "country": "${RegCountry}"
+                }
             c:\tabsetup\SilentInstaller.py:
               source:
                 Fn::Join:
@@ -265,12 +270,16 @@ Resources:
                     - InstallationBucket
                   - ".s3-us-west-2.amazonaws.com/SilentInstaller.py"
             c:\tabsetup\config.json:
-              content:
-                configEntities:
-                  identityStore:
-                    _type: identityStoreType
-                    type: local
-                topologyVersion: {}
+              content: 
+                {
+                  "configEntities": {
+                    "identityStore": {
+                      "_type": "identityStoreType",
+                      "type": "local"
+                    }
+                  },
+                  "topologyVerison": {}
+                }
             c:\tabsetup\python-3.6.4-amd64.exe:
               source: https://www.python.org/ftp/python/3.6.4/python-3.6.4-amd64.exe
             c:\tabsetup\tableau-server-webapp-installer.exe:
@@ -287,17 +296,6 @@ Resources:
                     - DefaultConfiguration
                     - InstallationConfig
                     - InstallationExecutable
-            c:\tabsetup\tableau-cert-config.txt:
-              content: !Sub |
-                [NewRequest]
-                Subject = "CN=example.com"
-                HashAlgorithm = SHA256
-                KeyLength = 2048
-                KeyAlgorithm = RSA
-                MachineKeySet = true
-                RequestType = Cert
-
-
           commands:
             01-install-python:
               command: c:\tabsetup\python-3.6.4-amd64.exe /quiet InstallAllUsers=1
@@ -314,7 +312,7 @@ Resources:
               waitAfterCompletion: 0
             04-run-installer:
               cwd: c:\tabsetup
-              command: "C:\Program Files\Python36\python.exe" SilentInstaller.py install --secretsFile c:\\tabsetup\\secrets.json --registrationFile c:\\tabsetup\\registration.json --configFile c:\\tabsetup\\config.json --installDir d:\\tableau c:\tabsetup\tableau-server-webapp-installer.exe > c:\\tabsetup\\tsm_installer-output.txt 2>&1
+              command: '"C:\Program Files\Python36\python.exe" SilentInstaller.py install --secretsFile c:\\tabsetup\\secrets.json --registrationFile c:\\tabsetup\\registration.json --configFile c:\\tabsetup\\config.json --installDir d:\\tableau c:\tabsetup\tableau-server-webapp-installer.exe > c:\\tabsetup\\tsm_installer-output.txt 2>&1'
               waitAfterCompletion: 0
             05-make-ssl-dir:
               cwd: d:\tableau
@@ -322,38 +320,26 @@ Resources:
               waitAfterCompletion: 0
             06-generate-key:
               cwd: d:\tableau\SSL
-              command: "d:\tableau\packages\apache.version\bin\openssl.exe" genrsa -out quickstart.key 4096
+              command: '"d:\tableau\packages\apache.<version>\bin\openssl.exe" genrsa -out quickstart.key 2048'
               env:
-                OPENSSL_CONF: "d:\tableau\<version>\apache\conf\openssl.cnf"
+                OPENSSL_CONF: d:\tableau\<version>\apache\conf\openssl.cnf
             07-generate-csr:
               cwd: d:\tableau\SSL
-              command: "d:\tableau\packages\apache.version\bin\openssl.exe" req -new -key quickstart.key -out quickstart.csr
+              command: '"d:\tableau\packages\apache.<version>\bin\openssl.exe" req -new -key quickstart.key -out quickstart.csr'
               env:
-                OPENSSL_CONF: "d:\tableau\<version>\apache\conf\openssl.cnf"
+                OPENSSL_CONF: d:\tableau\<version>\apache\conf\openssl.cnf
             08-sign-cert:
               cwd: d:\tableau\SSL
-              command: "d:\tableau\packages\apache.version\bin\openssl.exe" x509 -req -days 365 -in quickstart.csr -signkey quickstart.key -out quickstart.crt
+              command: '"d:\tableau\packages\apache.<version>\bin\openssl.exe" x509 -req -days 365 -in quickstart.csr -signkey quickstart.key -out quickstart.crt'
               env:
-                OPENSSL_CONF: "d:\tableau\<version>\apache\conf\openssl.cnf"
-
-
+                OPENSSL_CONF: d:\tableau\<version>\apache\conf\openssl.cnf
+            09-enable-ssl:
               cwd: d:\tableau\SSL
               command: tsm security external-ssl enable --cert-file <path-to-file.crt> --key-file <path-to-file.key>
               waitAftercompletion: 0
-
-              command: openssl.exe genrsa -out quickstart.key 4096
-              openssl.exe req -new -key quickstart.key -out quickstart.csr
-              openssl.exe x509 -req -days 365 -in quickstart.csr -signkey quickstart.key -out quickstart.crt
-              env:
-                OPENSSL_CONF: "c:\Program Files\Tableau\Tableau Server\<version>\apache\conf\openssl.cnf"
-
-            install-certificate:
-              cwd: c:\tabsetup
-              command: tsm security external-ssl enable --cert-file <path-to-file.crt> --key-file <path-to-file.key>
-              waitAftercompletion: 0
-            apply-changes:
-              cwd: tsm pending-changes apply
-            5-cleanup-secrets:
+            10-apply-changes:
+              command: tsm pending-changes apply
+            11-cleanup-secrets:
               cwd: c:\tabsetup
               command: del c:\tabsetup\secrets.json
               waitAfterCompletion: 0
@@ -379,24 +365,15 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-cfn-tableau-server"
       UserData:
-        Fn::Base64:
-          Fn::Join: !Sub |
+        Fn::Base64: !Sub |
             <script>
             cfn-init.exe -v -s ${AWS::StackId} -r TableauLaunchConfig --region ${AWS::Region}
             cfn-signal.exe -e %ERRORLEVEL% --stack ${AWS::StackName} --resource TableauASG --region ${AWS::Region}
             </script>
 
 Outputs:
-  InstanceID:
-    Description: EC2 InstanceID of the instance running Tableau Server
-    Value: !Ref TableauWindowsServer
-  PublicIPAddress:
-    Description: Public IP Address of instance running Tableau Server
-    Value: !GetAtt TableauWindowsServer.PublicIp
-  TableauServicesManagerURL:
-    Description: URL for the TSM Web UI
-    Value: !Sub http://${TableauServer.PublicIp}:8850/
-  TableauServerURL:
-    Description: Public DNS name of instance running Tableau Server
-    Value: !Sub !Sub http://${TableauServer.PublicDnsName}
+  TableauASG: 
+    Value: !Ref TableauASG
+
+
 

@@ -82,6 +82,9 @@ Parameters:
     - 'No'
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security Group for the Bastion Host
   IPAddress:
     Description: Provide an Elastic IP address (EIP) for the initial node (blank = no EIP)
     Type: String
@@ -102,6 +105,9 @@ Parameters:
     ConstraintDescription: must be the name of an existing EC2 KeyPair.
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
     Type: AWS::EC2::KeyPair::KeyName
+  LogBucket:
+    Description: S3 log bucket
+    Type: String
   Password:
     Description: Tableau Services Manager (TSM) administrator password
     Type: String
@@ -212,10 +218,6 @@ Parameters:
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: Amazon VPC ID
-Conditions:
-  HealthcareVersion: !Equals [ !Ref HealthcareVersion, "YES" ]
-  IsMultiNode: !Equals [ !Ref SingleOrMultiNode, "Multi" ]
-  IsSingleNode: !Equals [ !Ref SingleOrMultiNode, "Single" ]
 
 Mappings:
   AWSAMIRegionMap:
@@ -287,6 +289,10 @@ Mappings:
     Windows-Server-2012-R2: 
       Code: WS2012R2
 
+Conditions:
+  IsWindows: !Equals [ !Ref AMIOS, Windows-Server-2012-R2 ]
+  IsLinux: !Not [ Condition: IsWindows ]
+
 Resources:
   # First, encrypt the AMI root volume
   EncryptAmiStack:
@@ -341,7 +347,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: !If [ IsWindows, 3389, 22 ]
         ToPort: !If [ IsWindows, 3389, 22 ]
-        CidrIp: !Ref BastionSecurityGroup
+        SourceSecurityGroupId: !Ref BastionSecurityGroup
       - IpProtocol: tcp
         FromPort: 8850
         ToPort: 8850
@@ -360,7 +366,7 @@ Resources:
       Parameters:
         AcceptEULA: !Ref AcceptEULA
         ElbTargetGroup: !Ref ElbTargetGroup
-        ImageId: !GetAtt EncryptedAmiId
+        ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
         InstanceSecurityGroup: !Ref InstanceSecurityGroup
         InstanceType: !Ref InstanceType
         KeyPairName: !Ref KeyPairName
@@ -374,13 +380,13 @@ Resources:
         RegIndustry: !Ref RegIndustry
         RegLastName: !Ref RegLastName
         RegPhone: !Ref RegPhone
-        RegState: !Ref RegSTate
+        RegState: !Ref RegState
         RegTitle: !Ref RegTitle
         TableauServerAdminUser: !Ref TableauServerAdminUser
         TableauServerAdminPassword: !Ref TableauServerAdminPassword
         TableauServerLicenseKey: !Ref TableauServerLicenseKey
         Username: !Ref Username
-        
  
 Outputs:
-    # To fill in
+  ElbDns:
+    Value: !GetAtt Elb.DNSName

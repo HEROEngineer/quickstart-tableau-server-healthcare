@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for config rules
+
+Parameters:
+  LogBucketName:
+    Type: String
+    Default: ''
+    Description: Log bucket. If blank, will create a new bucket
+  
+
+Resources:
+  # ConfigRole
+  ConfigRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "config.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+        ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSConfigRulesExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSConfigRole
+
+  ConfigRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ConfigRolePolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Action:
+          - s3:PutObject
+          Resource: !Sub arn:aws:s3:::${LogBucket}/*
+          Condition:
+            StringLike:
+              s3:x-amz-acl: bucket-owner-full-control
+        - Effect: Allow
+          Action:
+          - lambda:InvokeFunction
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - "config:Put*"
+          Resource: "*"
+      Roles:
+      - !Ref ConfigRole
+
+  LambdaConfigRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSConfigRulesExecutionRole
+      - arn:aws:iam::aws:policy/service-role/AWSConfigRole
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  ConfigRecorder:
+    Type: AWS::Config::ConfigurationRecorder
+    Condition: NoConfigRecorder
+    Properties:
+      RecordingGroup:
+        AllSupported: true
+        IncludeGlobalResourceTypes: true
+      RoleARN: !GetAtt ConfigRole.Arn
+  
+  ConfigDeliveryChannel:
+    Type: AWS::Config::DeliveryChannel
+    Condition: NoConfigDeliveryChannel
+    Properties:
+      S3BucketName: !Ref ConfigBucket
+      S3KeyPrefix: "config"
+
+  #IAM Configuration Change Detected
+  #IAM access key created
+  #CloudTrail log config change detected
+  CloudTrailEnabled:
+    Description: Checks whether AWS CloudTrail is enabled in your AWS account
+    MaximumExecutionFrequency: One_Hour
+    Scope:
+      ComplianceResourceTypes:
+      - AWS::CloudTrail::Trail
+    Source:
+      Owner: AWS
+      SourceIdentifier: CLOUD_TRAIL_ENABLED
+  #Config change detected
+  #ELB Config change detected
+  ALBEncryption:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Description: Checks to ensure that all application load balancers are only reachable via HTTPS endpoints and not HTTP
+      MaximumExecutionFrequency:
+      Scope:
+      Source:
+        Owner: CUSTOM_LAMBDA
+
+
+
+  # EBS volume changes detected
+  EBSVolumeEncryption:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Description: Checks to ensure attached EBS volumes are encrypted
+      Scope:
+        ComplianceResourceTypes:
+        - AWS::EC2::Volume
+      Source:
+        Owner: AWS
+        SourceIdentifier: ENCRYPTED_VOLUMES
+
+  S3BucketPublicReadProhibited:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Description: Checks that your S3 buckets do not allow public read access. If an S3 bucket policy or bucket ACL allows public read access, the bucket is noncompliant.
+      Scope:
+        ComplianceResourceTypes:
+        - AWS::S3::Bucket
+      Source:
+        Owner: AWS
+        SourceIdentifier: S3_BUCKET_PUBLIC_READ_PROHIBITED
+
+  S3BucketPublicWriteProhibited:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Description: Checks that your S3 buckets do not allow public write access. If an S3 bucket policy or bucket ACL allows public write access, the bucket is noncompliant.
+      Scope:
+        ComplianceResourceTypes:
+        - AWS::S3::Bucket
+      Source:
+        Owner: AWS
+        SourceIdentifier: S3_BUCKET_PUBLIC_WRITE_PROHIBITED
+
+  S3EncryptionEnabled:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      # N.B. May need to update this policy
+      Description: Checks for explicit denies on put-object requests without server side encryption.
+      Scope:
+        ComplianceResourceTypes:
+        - AWS::S3::Bucket
+      Source:
+        Owner: AWS
+        SourceIdentifier: S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED 
+
+  S3VersioningEnabled:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Description: Checks whether versioning is enabled for your S3 buckets
+      Scope:
+        ComplianceResourceTypes:
+        - AWS::S3::Bucket
+      Source:
+        Owner: AWS
+        SourceIdentifier: S3_BUCKET_VERSIONING_ENABLED 
+  #Update or delete of a security Group
+
+  UnrestrictedSSH:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Description: Checks whether security groups that are in use disallow unrestricted incoming SSH traffic
+      Scope:
+        ComplianceResourceTypes:
+        - AWS::EC2::SecurityGroup
+      Source:
+        Owner: AWS
+        SourceIdentifier: INCOMING_SSH_DISABLED
+
+  UnrestrictedPorts:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Description: Checks whether security groups that are in use disallow unrestricted incoming TCP traffic to the specified ports.
+      InputParameters:
+        blockedPort1: 22
+        blockedPort2: 443
+        blockedPort3: 80
+        blockedPort4: 3389
+        blockedPort5: 8850
+      Scope:
+        ComplianceResourceTypes:
+        - AWS::EC2::SecurityGroup
+      Source:
+        Owner: AWS
+        SourceIdentifier: RESTRICTED_INCOMING_TRAFFIC
+
+Output:
+  LogBucketName:
+    Value: !If [ NoLogBucket, !Ref LogBucket, LogBucketName ]
