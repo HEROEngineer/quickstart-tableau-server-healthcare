@@ -319,22 +319,41 @@ Resources:
       Subnets: !Ref PublicSubnetIds
       Type: application
 
-  ElbListener:
+  ElbListenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       Certificates: 
         - CertificateArn: !Ref SSLCertificateARN
       DefaultActions:
       - Type: forward
-        TargetGroupArn: !Ref ElbTargetGroup
+        TargetGroupArn: !Ref ElbTargetGroupHTTPS
       LoadBalancerArn: !Ref Elb
       Port: 443
       Protocol: HTTPS
 
-  ElbTargetGroup:
+  ElbListenerTSM:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates: 
+        - CertificateArn: !Ref SSLCertificateARN
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref ElbTargetGroupTSM
+      LoadBalancerArn: !Ref Elb
+      Port: 8850
+      Protocol: HTTPS
+
+  ElbTargetGroupHTTPS:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Port: 443
+      Protocol: HTTPS
+      VpcId: !Ref VpcId
+
+  ElbTargetGroupTSM:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 8850
       Protocol: HTTPS
       VpcId: !Ref VpcId
 
@@ -351,12 +370,12 @@ Resources:
       - IpProtocol: tcp
         FromPort: 8850
         ToPort: 8850
-        SourceSecurityGroupId: !Ref BastionSecurityGroup
+        SourceSecurityGroupId: !Select [ 0, !GetAtt Elb.SecurityGroups ]
       - IpProtocol: tcp
         FromPort: 443
         ToPort: 443
         SourceSecurityGroupId: !Select [ 0, !GetAtt Elb.SecurityGroups ]
-      VpcId: !Ref VpcId   
+      VpcId: !Ref VpcId
 
   TableauServerWindows:
     Type: AWS::CloudFormation::Stack
@@ -365,7 +384,9 @@ Resources:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-single-server-windows.yaml
       Parameters:
         AcceptEULA: !Ref AcceptEULA
-        ElbTargetGroup: !Ref ElbTargetGroup
+        ElbTargetGroups: 
+        - !Ref ElbTargetGroupHTTPS
+        - !Ref ElbTargetGroupTSM
         ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
         InstanceSecurityGroup: !Ref InstanceSecurityGroup
         InstanceType: !Ref InstanceType

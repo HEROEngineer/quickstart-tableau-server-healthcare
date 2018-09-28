@@ -42,8 +42,26 @@ Resources:
           Resource: !Sub arn:aws:s3:::${LogBucket}
 
   ConfigRecorderEnabled:
+    Type: Custom::ConfigRecorderEnabled
+    Properties:
+      
+
+
+  ConfigRecorderEnabledLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+
 
   ConfigDeliveryChannelEnabled:
+    Type: Custom::ConfigDeliveryChannelEnabled
+    Properties:
+      ServiceToken:
+      VpcId: !Ref VpcId
+
+  ConfigDeliveryChannelEnabledLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      ServiceToken:
 
   ConfigRulesStack:
     Type: AWS::CloudFormation::Stack

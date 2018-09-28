@@ -9,9 +9,12 @@ Parameters:
     - 'No'
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
-  ElbTargetGroup:
+  ElbTargetGroupHTTPS:
     Type: String
-    Description: Elastic Load Balancing V2 Target Group
+    Description: Elastic Load Balancing V2 Target Group for 443
+  ElbTargetGroupTSM:
+    Type: String
+    Description: Elastic Load Balancing V2 Target Group for TSM (8850)
   InstanceType:
     AllowedValues:
     - c5.4xlarge
@@ -219,7 +222,8 @@ Resources:
       MaxSize: 1
       MinSize: 1
       TargetGroupARNs:
-      - !Ref ElbTargetGroup
+      - !Ref ElbTargetGroupHTTPS
+      - !Ref ElbTargetGroupTSM
       VPCZoneIdentifier: !Ref PrivateSubnetIds
     CreationPolicy:
       ResourceSignal:
@@ -282,6 +286,68 @@ Resources:
                 }
             c:\tabsetup\python-3.6.4-amd64.exe:
               source: https://www.python.org/ftp/python/3.6.4/python-3.6.4-amd64.exe
+            c:\tableau\sign_cert.py:
+              content: !Sub |
+                import os
+                import subprocess
+                import shlex
+                import argparse
+
+                def get_version(version_path):
+                  with open(version_path, 'r') as f:
+                    version = f.readline().strip()
+                  return version
+                
+                def generate_key(openssl_path, openssl_conf_path, private_key_name, bit_length=4096):
+                  cmd = '"%s" genrsa -out %s %s' % (openssl_path, private_key_name, bit_length)
+                  subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
+                
+                def generate_csr(openssl_path, openssl_conf_path, private_key_name, csr_name):
+                  cmd = '"%s" req -new -key %s -out %s' % (openssl_path, private_key_name, csr_name)
+                  subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
+                
+                def sign_cert(openssl_path, openssl_conf_path, private_key_name, csr_name, cert_name):
+                  cmd = '"%s" x509 -req -days 365 -in %s -signkey %s -out %s' % (openssl_path, csr_name, private_key_name, cert_name)
+                  subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
+                
+                def main():
+                  parser = argparse.ArgumentParser()
+                
+                  parser.add_argument('--version_path', type=str, required=True)
+                  parser.add_argument('--install_dir', type=str, required=True)
+                  parser.add_argument('--ssl_prefix', type=str, default='tableau_quickstart')
+                
+                  args = parser.parse_args()
+                
+                  version_path = args.version_path
+                  install_dir = args.install_dir
+                  ssl_prefix = args.ssl_prefix
+                
+                  # First get the version
+                  version = get_version(version_path)
+                
+                  # Next create a ssl directory
+                  ssl_dir = os.path.join(install_dir, 'ssl')
+                  os.mkdir(ssl_dir)
+                
+                  # Get paths for openssl conf and binary
+                  openssl_conf_path = os.path.join(install_dir, 'packages', 'apache.%s' % version, 'conf', 'openssl.cnf')
+                  openssl_path = os.path.join(install_dir, 'packages', 'apache.%s' % version, 'bin', 'openssl.exe')
+                
+                  # generate key
+                  private_key_name = ssl_prefix + '.key'
+                  generate_key(openssl_path, openssl_conf_path, private_key_name)
+                
+                  # generate csr
+                  csr_name = ssl_prefix + '.csr'
+                  generate_csr(openssl_path, openssl_conf_path, private_key_name, csr_name)
+                
+                  # sign cert
+                  cert_name = ssl_prefix + '.crt'
+                  sign_cert(openssl_path, openssl_conf_path, private_key_name, csr_name, cert_name)
+                if __name__ == "__main__":
+                  main()
+              
             c:\tabsetup\tableau-server-webapp-installer.exe:
               source:
                 Fn::Join:
@@ -312,34 +378,23 @@ Resources:
               waitAfterCompletion: 0
             04-run-installer:
               cwd: c:\tabsetup
-              command: '"C:\Program Files\Python36\python.exe" SilentInstaller.py install --secretsFile c:\\tabsetup\\secrets.json --registrationFile c:\\tabsetup\\registration.json --configFile c:\\tabsetup\\config.json --installDir d:\\tableau c:\tabsetup\tableau-server-webapp-installer.exe > c:\\tabsetup\\tsm_installer-output.txt 2>&1'
+              command: '"C:\Program Files\Python36\python.exe" SilentInstaller.py install --secretsFile c:\tabsetup\secrets.json --registrationFile c:\tabsetup\registration.json --configFile c:\tabsetup\config.json --installDir d:\tableau c:\tabsetup\tableau-server-webapp-installer.exe > c:\tabsetup\tsm_installer-output.txt 2>&1'
               waitAfterCompletion: 0
-            05-make-ssl-dir:
-              cwd: d:\tableau
-              cwd: mkdir SSL
-              waitAfterCompletion: 0
-            06-generate-key:
+            05-get-version:
+              cwd: c:\tabsetup
+              command: tsm version > c:\tabsetup\tsm_version.txt
+            06-sign-cert:
+              cwd: c:\tabsetup
+              command: '"C:\Program Files\Python36\python.exe" sign_cert.py --install_dir d:\tableau --version_path c:\tabsetup\tsm_version.txt --ssl_prefix tableau_quickstart'
+            07-enable-ssl:
               cwd: d:\tableau\SSL
-              command: '"d:\tableau\packages\apache.<version>\bin\openssl.exe" genrsa -out quickstart.key 2048'
-              env:
-                OPENSSL_CONF: d:\tableau\<version>\apache\conf\openssl.cnf
-            07-generate-csr:
-              cwd: d:\tableau\SSL
-              command: '"d:\tableau\packages\apache.<version>\bin\openssl.exe" req -new -key quickstart.key -out quickstart.csr'
-              env:
-                OPENSSL_CONF: d:\tableau\<version>\apache\conf\openssl.cnf
-            08-sign-cert:
-              cwd: d:\tableau\SSL
-              command: '"d:\tableau\packages\apache.<version>\bin\openssl.exe" x509 -req -days 365 -in quickstart.csr -signkey quickstart.key -out quickstart.crt'
-              env:
-                OPENSSL_CONF: d:\tableau\<version>\apache\conf\openssl.cnf
-            09-enable-ssl:
-              cwd: d:\tableau\SSL
-              command: tsm security external-ssl enable --cert-file <path-to-file.crt> --key-file <path-to-file.key>
+              command: tsm security external-ssl enable --cert-file tableau_quickstart.crt --key-file tableau_quickstart.key
               waitAftercompletion: 0
-            10-apply-changes:
+            08-apply-changes:
+              cwd: c:\tabsetup
               command: tsm pending-changes apply
-            11-cleanup-secrets:
+              waitAfterCompletion: 0
+            09-cleanup-secrets:
               cwd: c:\tabsetup
               command: del c:\tabsetup\secrets.json
               waitAfterCompletion: 0
@@ -366,10 +421,10 @@ Resources:
           Value: !Sub "${AWS::StackName}-cfn-tableau-server"
       UserData:
         Fn::Base64: !Sub |
-            <script>
-            cfn-init.exe -v -s ${AWS::StackId} -r TableauLaunchConfig --region ${AWS::Region}
-            cfn-signal.exe -e %ERRORLEVEL% --stack ${AWS::StackName} --resource TableauASG --region ${AWS::Region}
-            </script>
+          <script>
+          cfn-init.exe -v -s ${AWS::StackId} -r TableauLaunchConfig --region ${AWS::Region}
+          cfn-signal.exe -e %ERRORLEVEL% --stack ${AWS::StackName} --resource TableauASG --region ${AWS::Region}
+          </script>
 
 Outputs:
   TableauASG: 
