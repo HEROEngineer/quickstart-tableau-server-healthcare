@@ -12,9 +12,7 @@ Metadata:
       - KeyPairName
       - AMIOS
       - SourceCIDR
-      - ExistingSecurityGroup
       - IPAddress
-      - SingleOrMultiNode
     - Label:
         default: Server DNS configuration
       Parameters:
@@ -46,10 +44,6 @@ Metadata:
       - RegState
       - RegZip
       - RegCountry
-    - Label:
-        default: Healthcare version 
-      Parameters:
-      - HealthcareVersion
     - Label:
         default: AWS Quick Start Configuration
       Parameters:
@@ -148,18 +142,6 @@ Parameters:
     Description: 'List of Availability Zones to use for the subnets in the VPC. Note:
       The logical order is preserved and 3 AZs MUST be used for this deployment'
     Type: List<AWS::EC2::AvailabilityZone::Name>
-  ExistingSecurityGroup:
-    Description: Provide an existing security group or leave blank for creating a new one
-    Type: String
-  HealthcareVersion:
-    AllowedValues:
-    - "YES"
-    - "NO"
-    Description: Whether to use healthcare modified version to support compliance objectives 
-    Type: String
-  IPAddress:
-    Description: Provide an Elastic IP address (EIP) for the initial node (blank = no EIP)
-    Type: String
   InstanceType:
     AllowedValues:
     - c5.4xlarge
@@ -179,9 +161,10 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
   Password:
     Description: Tableau Services Manager (TSM) administrator password
-    MinLength: 6
-    NoEcho: 'true'
     Type: String
+    NoEcho: true
+    AllowedPattern: "^(?=[a-zA-Z0-9#@$?!]{8,}$)(?=.*?[a-z])(?=.*?[A-Z])(?=.*?[0-9]).*"
+    MinLength: 8
   QSS3BucketName:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -195,15 +178,10 @@ Parameters:
     AllowedPattern: "^[0-9a-zA-Z-/]*$"
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
       uppercase letters, hyphens (-), and forward slash (/).
-    Default: quickstart-tableau-server/
+    Default: quickstart-tableau-server-healthcare/
     Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
-    Type: String
-  RDPSSHAdminCIDR:
-    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: The CIDR address from which you will RDP or SSH into the instance
     Type: String
   RegCity:
     Description: City
@@ -254,12 +232,7 @@ Parameters:
     MinLength: 1
     Type: String
   SSLCertificateARN:
-    Default: ''
-    Description: The Amazon Resource Name for the existing SSL cert you wish to use for the load balancer; empty for none
-    Type: String
-  SSLCertificateARNInstance:
-    Default: ''
-    Description: The Amazon Resource Name for the existing SSL cert you wish to use for instance; empty for none
+    Description: The Amazon Resource Name for the existing SSL cert you wish to use for the load balancer
     Type: String
   SourceCIDR:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
@@ -292,7 +265,7 @@ Parameters:
   BastionAdminCIDR:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: The CIDR address from which you will remote  into the instance
+    Description: The CIDR address from which you will remote into the instance
     Type: String
 Mappings:
   DefaultConfiguration:
@@ -304,10 +277,8 @@ Mappings:
       PrivateSubnet1CIDR: 10.0.2.0/24
       PublicSubnet2CIDR: 10.0.3.0/24
       PrivateSubnet2CIDR: 10.0.4.0/24
-      PublicSubnet3CIDR: 10.0.5.0/24
-      PrivateSubnet3CIDR: 10.0.6.0/24
 Conditions:
-  IsWindows: !Equals [ !Ref AMIOS, WS2012R2 ]
+  IsWindows: !Equals [ !Ref AMIOS, Windows-Server-2012-R2 ]
   IsLinux: !Not [ Condition: IsWindows ]
 
 Resources:
@@ -318,13 +289,11 @@ Resources:
       Parameters:
         AvailabilityZones: !Join [ ",", !Ref AvailabilityZones ]
         KeyPairName: !Ref KeyPairName
-        NumberOfAZs: 3
+        NumberOfAZs: 2
         PrivateSubnet1ACIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PrivateSubnet1CIDR ]
         PrivateSubnet2ACIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PrivateSubnet2CIDR ]
-        PrivateSubnet3ACIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PrivateSubnet3CIDR ]
         PublicSubnet1CIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PublicSubnet1CIDR ]
         PublicSubnet2CIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PublicSubnet2CIDR ]
-        PublicSubnet3CIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PublicSubnet3CIDR ]
         VPCCIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, VPCCIDR ]
 
   BastionHostWindows:
@@ -337,7 +306,7 @@ Resources:
       Parameters:
         InstanceType: !FindInMap [ DefaultConfiguration, MachineConfiguration, BastionInstanceType ]
         KeyPairName: !Ref KeyPairName
-        RemoteAccessCIDR: !Ref RDPSSHAdminCIDR
+        RemoteAccessCIDR: !Ref BastionAdminCIDR
         PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
         PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
         VPCID: !GetAtt VPCStack.Outputs.VPCID
@@ -351,17 +320,28 @@ Resources:
       Parameters:
         BastionInstanceType: !FindInMap [ DefaultConfiguration, MachineConfiguration, BastionInstanceType ]
         KeyPairName: !Ref KeyPairName
-        RemoteAccessCIDR: !Ref RDPSSHAdminCIDR
+        RemoteAccessCIDR: !Ref BastionAdminCIDR
         PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
         PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
         VPCID: !GetAtt VPCStack.Outputs.VPCID
   
-  WorkloadStack:
+  LogStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
     - VPCStack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server.template
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
+      Parameters:
+        
+      
+
+  TableauStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - VPCStack
+    - LogStack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server.yaml
       Parameters:
         AMIOS: !Ref AMIOS
         AWSHostedZoneID: !Ref AWSHostedZoneID
@@ -403,7 +383,7 @@ Outputs:
     Value: !GetAtt VPCStack.Outputs.VPCID
   LoadBalancerDNSName:
     Description: DNS Name for the load balancer
-    Value: !GetAtt WorkloadStack.Outputs.LoadBalancerDNSName
+    Value: !GetAtt TableauStack.Outputs.LoadBalancerDNSName
   BastionEIP:
     Description: Public DNS name of bastion host
     Value: !GetAtt BastionHost.Outputs.EIP1

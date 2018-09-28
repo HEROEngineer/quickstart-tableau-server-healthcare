@@ -1,0 +1,111 @@
+[
+    {
+        "ParameterKey": "AMIOS",
+        "ParameterValue": "Windows-Server-2012-R2"
+    },
+    {
+        "ParameterKey": "AcceptEULA",
+        "ParameterValue": "Yes"
+    },
+    {
+        "ParameterKey": "AvailabilityZones",
+        "ParameterValue": "$[taskcat_genaz_2]"
+    },
+    {
+        "ParameterKey": "InstanceType",
+        "ParameterValue": "m4.4xlarge"
+    },
+    {
+        "ParameterKey": "KeyPairName",
+        "ParameterValue": "$[taskcat_getkeypair]"
+    },
+    {
+        "ParameterKey": "Password",
+        "ParameterValue": "test1234"
+    },
+    {
+        "ParameterKey": "Username",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "QSS3BucketName",
+        "ParameterValue": "$[taskcat_autobucket]"
+    },
+    {
+        "ParameterKey": "QSS3KeyPrefix",
+        "ParameterValue": "quickstart-tableau-server-healthcare/"
+    },
+    {
+        "ParameterKey": "RegCity",
+        "ParameterValue": "Seattle"
+    },
+    {
+        "ParameterKey": "RegCompany",
+        "ParameterValue": "MyCompany"
+    },
+    {
+        "ParameterKey": "RegCountry",
+        "ParameterValue": "USA"
+    },
+    {
+        "ParameterKey": "RegDepartment",
+        "ParameterValue": "Solutions"
+    },
+    {
+        "ParameterKey": "RegEmail",
+        "ParameterValue": "test@example.com"
+    },
+    {
+        "ParameterKey": "RegIndustry",
+        "ParameterValue": "Healthcare"
+    },
+    {
+        "ParameterKey": "RegLastName",
+        "ParameterValue": "Smith"
+    },
+    {
+        "ParameterKey": "RegFirstName",
+        "ParameterValue": "John"
+    },
+    {
+        "ParameterKey": "RegPhone",
+        "ParameterValue": "888-888-8888"
+    },
+    {
+        "ParameterKey": "RegState",
+        "ParameterValue": "WA"
+    },
+    {
+        "ParameterKey": "RegTitle",
+        "ParameterValue": "Director"
+    },
+    {
+        "ParameterKey": "RegZip",
+        "ParameterValue": "98101"
+    },
+    {
+        "ParameterKey": "SSLCertificateARN",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "SourceCIDR",
+        "ParameterValue": "0.0.0.0/0"
+    },
+
+    {
+        "ParameterKey": "TableauServerAdminPassword",
+        "ParameterValue": "test1234"
+    },
+    {
+        "ParameterKey": "TableauServerLicenseKey",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "TSMAdminCIDR",
+        "ParameterValue": "0.0.0.0/0"
+    },
+    {
+        "ParameterKey": "BastionAdminCIDR",
+        "ParameterValue": "0.0.0.0/0"
+    }
+]

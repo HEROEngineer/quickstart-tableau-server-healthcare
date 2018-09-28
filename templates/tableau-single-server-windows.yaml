@@ -2,6 +2,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: CloudFormation Template for TSM-based Tableau Server on Windows
 Parameters:
+  AcceptEULA:
+    AllowedPattern: 'Yes'
+    AllowedValues:
+    - 'Yes'
+    - 'No'
+    Description: 'View the EULA at the Link: https://www.tableau.com/eula'
+    Type: String
+  ElbTargetGroup:
+    Type: String
+    Description: Elastic Load Balancing V2 Target Group
   InstanceType:
     AllowedValues:
     - c5.4xlarge
@@ -19,21 +29,13 @@ Parameters:
     Description: Public/private key pairs allow you to securely connect to your instance
       after it launches
     Type: AWS::EC2::KeyPair::KeyName
-  SourceCIDR:
-    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: The CIDR address from which you will connect to the instance
-    Type: String
-  TSMAdminCIDR:
-    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: The CIDR address from which you will connect to the TSM Web UI
-    Type: String
-  RDPAdminCIDR:
-    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: The CIDR address from which you will remote  into the instance
-    Type: String
+  InstanceSecurityGroup:
+    Description: The Security Group Id for the instance
+    Type: AWS::EC2::SecurityGroup::Id
+  PrivateSubnetIds:
+    Description: Private Subnet Ids to launch Tableau Server in
+    Type: List<AWS::EC2::Subnet::Id>
+
   Username:
     Description: Tableau Services Manager (TSM) administrator username (cannot be
       Administrator)
@@ -58,13 +60,7 @@ Parameters:
   TableauServerLicenseKey:
     Description: License Key (leave blank for trial)
     Type: String
-  AcceptEULA:
-    AllowedPattern: 'Yes'
-    AllowedValues:
-    - 'Yes'
-    - 'No'
-    Description: 'View the EULA at the Link: https://www.tableau.com/eula'
-    Type: String
+  
   RegFirstName:
     Description: First Name
     Type: String
@@ -113,16 +109,10 @@ Parameters:
     Description: Country
     Type: String
     MinLength: '1'
-  ExistingSecurityGroup:
-    Description: Provide an existing security group or leave blank for creating a
-      new one
-    Type: String
-  IPAddress:
-    Description: Provide an EIP for the node (blank = no EIP)
-    Type: String
+
   ImageId:
-    Description: Amazon Machine Image Id
-    Type: AWS::EC2::Image:Id
+    Type: AWS::EC2::Image::Id
+    Description: AmiId
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -218,19 +208,26 @@ Mappings:
 
 Conditions:
   IsTrial: !Equals [ '', !Ref TableauServerLicenseKey ]
-  NoElasticIP: !Equals [ '', !Ref IPAddress ]
-  HasElasticIP: !Not [ Condition: NoElasticIP ]
 
 Resources:
-  IPAssoc:
-    Type: AWS::EC2::EIPAssociation
-    Condition: HasElasticIP
-    DependsOn: TableauWindowsServer
+  TableauASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      InstanceId: !Ref TableauWindowsServer
-      EIP: !Ref IPAddress
-  TableauWindowsServer:
-    Type: AWS::EC2::Instance
+      DesiredCapacity: 1
+      HealthCheckType: ELB
+      LaunchConfigurationName: !Ref TableauLaunchConfiguration
+      MaxSize: 1
+      MinSize: 1
+      TargetGroupARNs:
+      - !Ref ElbTargetGroup
+      VPCZoneIdentifier: !Ref PrivateSubnetIds
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT2H
+
+  TableauLaunchConfig:
+    Type:  AWS::AutoScaling::LaunchConfiguration
     Metadata:
       AWS::CloudFormation::Init:
         config:
@@ -290,31 +287,78 @@ Resources:
                     - DefaultConfiguration
                     - InstallationConfig
                     - InstallationExecutable
+            c:\tabsetup\tableau-cert-config.txt:
+              content: !Sub |
+                [NewRequest]
+                Subject = "CN=example.com"
+                HashAlgorithm = SHA256
+                KeyLength = 2048
+                KeyAlgorithm = RSA
+                MachineKeySet = true
+                RequestType = Cert
+
+
           commands:
-            1-install-python:
+            01-install-python:
               command: c:\tabsetup\python-3.6.4-amd64.exe /quiet InstallAllUsers=1
                 PrependPath=1
               cwd: c:\tabsetup
               waitAfterCompletion: 0
-            2-create-user:
+            02-create-user:
               command: !Sub net user ${Username} ${Password} /add /y
               cwd: c:\tabsetup
               waitAfterCompletion: 0
-            3-add-admin:
+            03-add-admin:
               command: !Sub net localgroup Administrators ${Username} /add /y
               cwd: c:\tabsetup
               waitAfterCompletion: 0
-            4-run-installer:
+            04-run-installer:
               cwd: c:\tabsetup
               command: "C:\Program Files\Python36\python.exe" SilentInstaller.py install --secretsFile c:\\tabsetup\\secrets.json --registrationFile c:\\tabsetup\\registration.json --configFile c:\\tabsetup\\config.json --installDir d:\\tableau c:\tabsetup\tableau-server-webapp-installer.exe > c:\\tabsetup\\tsm_installer-output.txt 2>&1
               waitAfterCompletion: 0
+            05-make-ssl-dir:
+              cwd: d:\tableau
+              cwd: mkdir SSL
+              waitAfterCompletion: 0
+            06-generate-key:
+              cwd: d:\tableau\SSL
+              command: "d:\tableau\packages\apache.version\bin\openssl.exe" genrsa -out quickstart.key 4096
+              env:
+                OPENSSL_CONF: "d:\tableau\<version>\apache\conf\openssl.cnf"
+            07-generate-csr:
+              cwd: d:\tableau\SSL
+              command: "d:\tableau\packages\apache.version\bin\openssl.exe" req -new -key quickstart.key -out quickstart.csr
+              env:
+                OPENSSL_CONF: "d:\tableau\<version>\apache\conf\openssl.cnf"
+            08-sign-cert:
+              cwd: d:\tableau\SSL
+              command: "d:\tableau\packages\apache.version\bin\openssl.exe" x509 -req -days 365 -in quickstart.csr -signkey quickstart.key -out quickstart.crt
+              env:
+                OPENSSL_CONF: "d:\tableau\<version>\apache\conf\openssl.cnf"
+
+
+              cwd: d:\tableau\SSL
+              command: tsm security external-ssl enable --cert-file <path-to-file.crt> --key-file <path-to-file.key>
+              waitAftercompletion: 0
+
+              command: openssl.exe genrsa -out quickstart.key 4096
+              openssl.exe req -new -key quickstart.key -out quickstart.csr
+              openssl.exe x509 -req -days 365 -in quickstart.csr -signkey quickstart.key -out quickstart.crt
+              env:
+                OPENSSL_CONF: "c:\Program Files\Tableau\Tableau Server\<version>\apache\conf\openssl.cnf"
+
+            install-certificate:
+              cwd: c:\tabsetup
+              command: tsm security external-ssl enable --cert-file <path-to-file.crt> --key-file <path-to-file.key>
+              waitAftercompletion: 0
+            apply-changes:
+              cwd: tsm pending-changes apply
             5-cleanup-secrets:
               cwd: c:\tabsetup
               command: del c:\tabsetup\secrets.json
               waitAfterCompletion: 0
     Properties:
-      InstanceType: !Ref InstanceType
-      ImageId: !Ref ImageId
+      AssociatePublicIpAddress: false
       BlockDeviceMappings:
       - DeviceName: /dev/sda1
         Ebs:
@@ -326,28 +370,22 @@ Resources:
           Encrypted: true
           VolumeSize: !FindInMap [ DefaultConfiguration, MachineConfiguration, DataVolumeSize ]
           VolumeType: gp2
-      SecurityGroups: !Ref InstanceSecurityGroup
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
       KeyName: !Ref KeyPairName
+      SecurityGroups:
+      - !Ref InstanceSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-cfn-tableau-server"
       UserData:
         Fn::Base64:
-          Fn::Join: !Sub 
-          - |
+          Fn::Join: !Sub |
             <script>
-            cfn-init.exe -v -s ${AWS::StackId} -r TableauWindowsServer --region ${AWS::Region}
-            cfn-signal.exe -e %errorlevel% ${WHUrl}
+            cfn-init.exe -v -s ${AWS::StackId} -r TableauLaunchConfig --region ${AWS::Region}
+            cfn-signal.exe -e %ERRORLEVEL% --stack ${AWS::StackName} --resource TableauASG --region ${AWS::Region}
             </script>
-          - WHUrl:
-              Fn::Base64: !Ref TableauServerWaitHandle
-      Tags:
-      - Key: Name
-        Value: !Sub "${AWS::StackName}-cfn-tableau-server"
-  TableauServerWaitHandle:
-    Type: AWS::CloudFormation::WaitConditionHandle
-  TableauServerWaitCondition:
-    Type: AWS::CloudFormation::WaitCondition
-    Properties:
-      Handle: !Ref TableauServerWaitHandle
-      Timeout: 3600
+
 Outputs:
   InstanceID:
     Description: EC2 InstanceID of the instance running Tableau Server

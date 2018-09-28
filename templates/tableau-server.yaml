@@ -82,16 +82,6 @@ Parameters:
     - 'No'
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
-  ExistingSecurityGroup:
-    Description: Provide an existing security group or leave blank for creating a new one
-    Type: String
-  HealthcareVersion:
-    AllowedValues:
-      - "Yes"
-      - "No"
-    Default: "No"
-    Description: Whether to use healthcare modified version to support compliance objectives 
-    Type: String
   IPAddress:
     Description: Provide an Elastic IP address (EIP) for the initial node (blank = no EIP)
     Type: String
@@ -118,6 +108,12 @@ Parameters:
     NoEcho: true
     AllowedPattern: "^(?=[a-zA-Z0-9#@$?!]{8,}$)(?=.*?[a-z])(?=.*?[A-Z])(?=.*?[0-9]).*"
     MinLength: '8'
+  PublicSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Public subnets in your VPC
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnets in your VPC
   QSS3BucketName:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -189,10 +185,6 @@ Parameters:
     Default: ''
     Description: The Amazon Resource Name for the existing SSL cert you wish to use for the load balancer; empty for none
     Type: String
-  SSLCertificateARNInstance:
-    Default: ''
-    Description: The Amazon Resource Name for the existing SSL cert you wish to use for your EC2 instances; empty for none
-    Type: String
   SourceCIDR:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
     ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
@@ -224,15 +216,6 @@ Conditions:
   HealthcareVersion: !Equals [ !Ref HealthcareVersion, "YES" ]
   IsMultiNode: !Equals [ !Ref SingleOrMultiNode, "Multi" ]
   IsSingleNode: !Equals [ !Ref SingleOrMultiNode, "Single" ]
-
-Rules:
-  SSLEnabled:
-    RuleCondition: !Equals [ "Yes", !Ref HealthcareVersion ]
-    Assertions:
-    - Assert: !Not [ !Or [ !Equals [ "", !Ref SSLCertificateARN ], !Equals [ "", !Ref SSLCertificateARNInstance ] ] ]
-      AssertionDescription: If you are launching the healthcare version, SSL certs must be used on the Load Balancer and Instances
-    - Assert: !Equals [ "Multi", !Ref SingleOrMultiNode ]
-      AssertionDescription: If you are launching the healthcare version, must be multi-node
 
 Mappings:
   AWSAMIRegionMap:
@@ -305,6 +288,7 @@ Mappings:
       Code: WS2012R2
 
 Resources:
+  # First, encrypt the AMI root volume
   EncryptAmiStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -314,22 +298,59 @@ Resources:
         AmiRegion: !Ref "AWS::Region"
         SubnetId: !Select [ 0, !Ref PrivateSubnetIds ]
 
-  ServerSecurityGroup:
+  # Next, create the Elb in a public subnet
+  Elb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+      - Key: access_logs.s3.enabled
+        Value: true
+      - Key: access_logs.s3.bucket
+        Value: !Ref LogBucket
+      - Key: access_logs.s3.prefix
+        Value: tableau-elb-logs
+      Scheme: internet-facing
+      Subnets: !Ref PublicSubnetIds
+      Type: application
+
+  ElbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates: 
+        - CertificateArn: !Ref SSLCertificateARN
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref ElbTargetGroup
+      LoadBalancerArn: !Ref Elb
+      Port: 443
+      Protocol: HTTPS
+
+  ElbTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 443
+      Protocol: HTTPS
+      VpcId: !Ref VpcId
+
+  # Configure Instance Security Group
+  InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupDescription: Enable SSH/RDP access and HTTPS from the load balancer only
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: !If [ IsWindows, 3389, 22 ]
         ToPort: !If [ IsWindows, 3389, 22 ]
-        CidrIp: !Ref SourceCIDR
+        CidrIp: !Ref BastionSecurityGroup
       - IpProtocol: tcp
         FromPort: 8850
         ToPort: 8850
-        CidrIp: !Ref TSMAdminCIDR
+        SourceSecurityGroupId: !Ref BastionSecurityGroup
       - IpProtocol: tcp
         FromPort: 443
         ToPort: 443
-        CidrIp: !Ref RDPSSHCIDR
+        SourceSecurityGroupId: !Select [ 0, !GetAtt Elb.SecurityGroups ]
+      VpcId: !Ref VpcId   
 
   TableauServerWindows:
     Type: AWS::CloudFormation::Stack
@@ -338,10 +359,10 @@ Resources:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-single-server-windows.yaml
       Parameters:
         AcceptEULA: !Ref AcceptEULA
-        ExistingSecurityGroup: !Ref ExistingSecurityGroup
+        ElbTargetGroup: !Ref ElbTargetGroup
+        ImageId: !GetAtt EncryptedAmiId
         InstanceSecurityGroup: !Ref InstanceSecurityGroup
         InstanceType: !Ref InstanceType
-        IPAddress: !Ref IPAddress
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
         RegCity: !Ref RegCity
@@ -355,26 +376,11 @@ Resources:
         RegPhone: !Ref RegPhone
         RegState: !Ref RegSTate
         RegTitle: !Ref RegTitle
-        RDPAdminCIDR: !Ref RDPAdminCIDR
-        SourceCIDR: !Ref SourceCIDR
         TableauServerAdminUser: !Ref TableauServerAdminUser
         TableauServerAdminPassword: !Ref TableauServerAdminPassword
         TableauServerLicenseKey: !Ref TableauServerLicenseKey
-        TSMAdminCIDR: !Ref TSMAdminCIDR
         Username: !Ref Username
         
-
-
-
-  # To fill in later
-  #TableauSingleNodeStack:
-  #  Type: AWS::CloudFormation::Stack
-  #  Condition: IsSingleNode
-  #  Properties:
-  #    TemplateURL: !Sub
-  #    Parameters:
-        
-  # To fill in
  
 Outputs:
     # To fill in
