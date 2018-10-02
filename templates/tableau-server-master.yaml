@@ -1,3 +1,17 @@
+# - master
+#   - configure ssl
+#   - bastion
+#     - bastion windows
+#     - bastion linux
+#   - logging
+#     - config rules
+#   - tableau
+#     - encrypt ami
+#     - tableau windows
+#     - tableau centos7
+#     - tableau ubuntu
+#     - tableau linux
+
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'AWS CloudFormation Template: Tableau Server Cluster with three nodes
   running on either Linux (CentOS/Ubuntu) or Windows.'
@@ -17,7 +31,6 @@ Metadata:
         default: Server DNS configuration
       Parameters:
       - SSLCertificateARN
-      - SSLCertificateARNInstance
       - AWSPublicFQDN
       - AWSHostedZoneID
     - Label:
@@ -60,12 +73,6 @@ Metadata:
         default: Accept Tableau End User License Agreement
       AvailabilityZones:
         default: Availability Zones
-      ExistingSecurityGroup:
-        default: Existing Security Group
-      HealthcareVersion:
-        default: Healthcare version of deployment
-      IPAddress:
-        default: EIP address for initial node
       InstanceType:
         default: Amazon EC2 instance type
       KeyPairName:
@@ -100,8 +107,6 @@ Metadata:
         default: Title
       RegZip:
         default: Zip/Postal Code
-      SingleOrMultiNode:
-        default: Single or Multi-node cluster?
       SSLCertificateARN:
         default: SSL Certificate ARN (Requires matching DNS name)
       SourceCIDR:
@@ -114,8 +119,6 @@ Metadata:
         default: Tableau Activation Key
       Username:
         default: Tableau Services Manager (TSM) administrator username
-      WorkerCount:
-        default: Number of additional Tableau Server instances
 Parameters:
   AMIOS:
     AllowedValues:
@@ -325,19 +328,40 @@ Resources:
         PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
         VPCID: !GetAtt VPCStack.Outputs.VPCID
   
-  LogStack:
+ # LogStack:
+ #   Type: AWS::CloudFormation::Stack
+ #   DependsOn:
+ #   - VPCStack
+ #   Properties:
+ #     TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
+  #    Parameters:
+
+  CopyLambdaStack:
+    DependsOn: VPCStack
     Type: AWS::CloudFormation::Stack
-    DependsOn:
-    - VPCStack
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
+    Properties: 
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/copy-lambdas.yaml
       Parameters:
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+
+  ConfigureSSLStack:
+    DependsOn: CopyLambdaStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/acm-route53.yaml
+      Parameters:
+        LambdaZipsBucketName: !GetAtt CopyLambdaStack.Outputs.LambdaZipsBucket
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        DomainName: !Ref AWSPublicFQDN
+        HostedZoneID: !Ref AWSHostedZoneID
 
   TableauStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
     - VPCStack
-    - LogStack
+    - ConfigureSSLStack
+ #   - LogStack
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server.yaml
       Parameters:
@@ -351,11 +375,11 @@ Resources:
         Password: !Ref Password
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
-        PrivateSubnetIds: !Sub "${VPCStack.Outputs.PrivateSubnet1AID},${VPCStack.Outputs.PrivateSubnet2AID},${VPCStack.Outputs.PrivateSubnet3AID}"
-        PublicSubnetIds: !Sub "${VPCStack.Outputs.PublicSubnet1ID},${VPCStack.Outputs.PublicSubnet2ID},${VPCStack.Outputs.PublicSubnet3ID}"
+        PrivateSubnetIds: !Sub "${VPCStack.Outputs.PrivateSubnet1AID},${VPCStack.Outputs.PrivateSubnet2AID}"
+        PublicSubnetIds: !Sub "${VPCStack.Outputs.PublicSubnet1ID},${VPCStack.Outputs.PublicSubnet2ID}"
         BastionSecurityGroup: !If [ IsWindows, !GetAtt BastionWindows.Outputs.SecurityGroup, !GetAtt BastionLinux.Outputs.BastionSecurityGroupID ]
         SourceCIDR: !Ref SourceCIDR
-        SSLCertificateARN: !Ref SSLCertificateARN
+        SSLCertificateARN: !GetAtt ConfigureSSLStack.Outputs.ACMCertificate
         Username: !Ref Username
         Password: !Ref Password
         TableauServerAdminUser: !Ref TableauServerAdminUser
@@ -383,9 +407,9 @@ Outputs:
   LoadBalancerDNSName:
     Description: DNS Name for the load balancer
     Value: !GetAtt TableauStack.Outputs.LoadBalancerDNSName
-  BastionEIP:
-    Description: Public DNS name of bastion host
-    Value: !GetAtt BastionHost.Outputs.EIP1
+#  BastionEIP:
+#    Description: Public DNS name of bastion host
+#    Value: !GetAtt BastionHost.Outputs.EIP1
   TableauServerURL:
     Description: Public DNS name to reach cluster
     Value: !GetAtt WorkloadStack.Outputs.TableauServerURL

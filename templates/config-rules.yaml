@@ -198,3 +198,4 @@ Resources:
 Output:
   LogBucketName:
     Value: !If [ NoLogBucket, !Ref LogBucket, LogBucketName ]
+

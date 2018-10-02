@@ -2,19 +2,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: CloudFormation Template for basic logging functionality
 
-Parameters:
-  LogBucketName:
-    Type: String
-    Default: ''
-    Description: Log bucket. If blank, will create a new bucket
 
-Conditions:
-  NoLogBucket: !Equals [ LogBucketName, '' ]
 
 Resources:
   LogBucket:
     Type: AWS::S3::Bucket
-    Condition: NoLogBucket
     Properties:
       BucketEncryption: 
         ServerSideEncryptionConfiguration:
@@ -44,12 +36,14 @@ Resources:
   ConfigRecorderEnabled:
     Type: Custom::ConfigRecorderEnabled
     Properties:
-      
+
 
 
   ConfigRecorderEnabledLambda:
     Type: AWS::Lambda::Function
     Properties:
+
+      def lambda_handler(event, context)
 
 
   ConfigDeliveryChannelEnabled:

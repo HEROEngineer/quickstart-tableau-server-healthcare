@@ -4,6 +4,14 @@
         "ParameterValue": "Windows-Server-2012-R2"
     },
     {
+        "ParameterKey": "AWSHostedZoneID",
+        "ParameterValue": "Z3AUDQLV95DIKK"
+    },
+    {
+        "ParameterKey": "AWSPublicFQDN",
+        "ParameterValue": "tableau-hc.t.quickstart.awspartner.com"
+    },
+    {
         "ParameterKey": "AcceptEULA",
         "ParameterValue": "Yes"
     },
@@ -25,7 +33,7 @@
     },
     {
         "ParameterKey": "Username",
-        "ParameterValue": ""
+        "ParameterValue": "test"
     },
     {
         "ParameterKey": "QSS3BucketName",

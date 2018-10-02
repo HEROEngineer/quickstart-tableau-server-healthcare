@@ -319,6 +319,7 @@ Resources:
       Subnets: !Ref PublicSubnetIds
       Type: application
 
+  # Create two listeners - one for HTTPS and other for TSM
   ElbListenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
