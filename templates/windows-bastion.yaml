@@ -11,11 +11,9 @@ Parameters:
       for the instance
     Type: AWS::EC2::KeyPair::KeyName
   SourceCIDR:
-    Default: 69.25.143.0/24
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: CIDR from which you may connect to web interface or bastion host
-      (e.g., 1.1.1.1/32)
+    Description: CIDR from which you may connect to web interface or bastion host (e.g., 1.1.1.1/32)
     Type: String
   SubnetId:
     Description: The Id of the subnet for the bastion host
@@ -100,7 +98,8 @@ Resources:
     Properties:
       InstanceType: !Ref InstanceType
       ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", WS2012R2 ]
-      SecurityGroupIds: !Ref BastionSecurityGroup
+      SecurityGroupIds: 
+      - !Ref BastionSecurityGroup
       KeyName: !Ref KeyPairName
       SubnetId: !Ref SubnetId
       Tags:

@@ -29,7 +29,7 @@
     },
     {
         "ParameterKey": "Password",
-        "ParameterValue": "test1234"
+        "ParameterValue": "Test1234"
     },
     {
         "ParameterKey": "Username",
@@ -98,6 +98,10 @@
     {
         "ParameterKey": "SourceCIDR",
         "ParameterValue": "0.0.0.0/0"
+    },
+    {
+        "ParameterKey": "TableauServerAdminUser",
+        "ParameterValue": "test"
     },
 
     {

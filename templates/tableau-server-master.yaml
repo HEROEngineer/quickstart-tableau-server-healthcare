@@ -26,7 +26,6 @@ Metadata:
       - KeyPairName
       - AMIOS
       - SourceCIDR
-      - IPAddress
     - Label:
         default: Server DNS configuration
       Parameters:
@@ -253,7 +252,6 @@ Parameters:
     Type: String
   TableauServerLicenseKey:
     Description: License Key
-    MinLength: 1
     Type: String
   Username:
     AllowedPattern: "^(?!(tableau|tsmagent|admin|root)$)[A-Za-z0-9]+$"
@@ -305,13 +303,12 @@ Resources:
     DependsOn:
     - VPCStack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/windows-bastion.template
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/windows-bastion.yaml
       Parameters:
         InstanceType: !FindInMap [ DefaultConfiguration, MachineConfiguration, BastionInstanceType ]
         KeyPairName: !Ref KeyPairName
-        RemoteAccessCIDR: !Ref BastionAdminCIDR
-        PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
-        PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
+        SourceCIDR: !Ref BastionAdminCIDR
+        SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1ID
         VPCID: !GetAtt VPCStack.Outputs.VPCID
   BastionHostLinux:
     Type: AWS::CloudFormation::Stack
@@ -369,7 +366,6 @@ Resources:
         AWSHostedZoneID: !Ref AWSHostedZoneID
         AWSPublicFQDN: !Ref AWSPublicFQDN
         AcceptEULA: !Ref AcceptEULA
-        IPAddress: !Ref IPAddress
         InstanceType: !Ref InstanceType
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
@@ -377,11 +373,10 @@ Resources:
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         PrivateSubnetIds: !Sub "${VPCStack.Outputs.PrivateSubnet1AID},${VPCStack.Outputs.PrivateSubnet2AID}"
         PublicSubnetIds: !Sub "${VPCStack.Outputs.PublicSubnet1ID},${VPCStack.Outputs.PublicSubnet2ID}"
-        BastionSecurityGroup: !If [ IsWindows, !GetAtt BastionWindows.Outputs.SecurityGroup, !GetAtt BastionLinux.Outputs.BastionSecurityGroupID ]
+        BastionSecurityGroup: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.SecurityGroup, !GetAtt BastionHostLinux.Outputs.BastionSecurityGroupID ]
         SourceCIDR: !Ref SourceCIDR
         SSLCertificateARN: !GetAtt ConfigureSSLStack.Outputs.ACMCertificate
         Username: !Ref Username
-        Password: !Ref Password
         TableauServerAdminUser: !Ref TableauServerAdminUser
         TableauServerAdminPassword: !Ref TableauServerAdminPassword
         TableauServerLicenseKey: !Ref TableauServerLicenseKey
@@ -397,7 +392,7 @@ Resources:
         RegState: !Ref RegState
         RegZip: !Ref RegZip
         RegCountry: !Ref RegCountry
-        TSMAdminCIDR: !Ref TSMADminCIDR
+        TSMAdminCIDR: !Ref TSMAdminCIDR
         VpcId: !GetAtt VPCStack.Outputs.VPCID
         
 Outputs:
@@ -412,4 +407,4 @@ Outputs:
 #    Value: !GetAtt BastionHost.Outputs.EIP1
   TableauServerURL:
     Description: Public DNS name to reach cluster
-    Value: !GetAtt WorkloadStack.Outputs.TableauServerURL
+    Value: !GetAtt TableauStack.Outputs.TableauServerURL
