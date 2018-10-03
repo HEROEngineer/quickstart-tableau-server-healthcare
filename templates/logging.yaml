@@ -2,7 +2,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: CloudFormation Template for basic logging functionality
 
-
+Mappings:
+  ElbLogging:
+    us-east-1: 
+      Principal: 127311923021
+    us-east-2: 
+      Principal: 033677994240
+    us-west-1: 
+      Principal: 027434742980
+    us-west-2: 
+      Principal: 797873946194
 
 Resources:
   LogBucket:
@@ -10,14 +19,14 @@ Resources:
     Properties:
       BucketEncryption: 
         ServerSideEncryptionConfiguration:
-          ServerSideEncryptionByDefault:
+        - ServerSideEncryptionByDefault:
             SSEAlgorithm: AES256
       VersioningConfiguration:
         Status: Enabled
   LogBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref ConfigBucket
+      Bucket: !Ref LogBucket
       PolicyDocument:
         Version: 2012-10-17
         Id: DeleteObjectPolicy
@@ -32,38 +41,41 @@ Resources:
           Principal: "*"
           Action: "s3:DeleteBucket"
           Resource: !Sub arn:aws:s3:::${LogBucket}
-
-  ConfigRecorderEnabled:
-    Type: Custom::ConfigRecorderEnabled
-    Properties:
-
-
-
-  ConfigRecorderEnabledLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-
-      def lambda_handler(event, context)
+        - Sid: ElbLogs
+          Effect: Allow
+          Principal:
+            AWS:
+            - !FindInMap [ ElbLogging, !Ref "AWS::Region" , Principal ]
+          Action: "s3:PutObject"
+          Resource: !Sub arn:aws:s3:::${LogBucket}/*
 
 
-  ConfigDeliveryChannelEnabled:
-    Type: Custom::ConfigDeliveryChannelEnabled
-    Properties:
-      ServiceToken:
-      VpcId: !Ref VpcId
+  #ConfigRecorderEnabled:
+   # Type: Custom::ConfigRecorderEnabled
+   # Properties:
+  #ConfigRecorderEnabledLambda:
+    #Type: AWS::Lambda::Function
+    #Properties:
 
-  ConfigDeliveryChannelEnabledLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      ServiceToken:
+#      def lambda_handler(event, context)
+#  ConfigDeliveryChannelEnabled:
+#    Type: Custom::ConfigDeliveryChannelEnabled
+#    Properties:
+#      ServiceToken:
+#      VpcId: !Ref VpcId
 
-  ConfigRulesStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/config-rules.yaml
-      Parameters:
-        LogBucket: !If [ NoLogBucket, !Ref LogBucket, LogBucketName ]
+#  ConfigDeliveryChannelEnabledLambda:
+#    Type: AWS::Lambda::Function
+#    Properties:
+#      ServiceToken:
 
-Output:
-  LogBucketName:
-    Value: !If [ NoLogBucket, !Ref LogBucket, LogBucketName ]
+#  ConfigRulesStack:
+#    Type: AWS::CloudFormation::Stack
+#    Properties:
+#      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/config-rules.yaml
+#      Parameters:
+#        LogBucket: !If [ NoLogBucket, !Ref LogBucket, LogBucketName ]
+
+Outputs:
+  LogBucket:
+    Value: !Ref LogBucket

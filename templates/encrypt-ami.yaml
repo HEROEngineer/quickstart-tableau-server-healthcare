@@ -719,6 +719,7 @@ Resources:
           import threading
           from botocore.vendored import requests
           import sys
+          import uuid
           ec2 = boto3.client('ec2')
           def timeout(event, context):
             logging.error('Execution is about to time out, sending failure response to CloudFormation')
@@ -732,7 +733,7 @@ Resources:
             try:
               response = ec2.create_image(
                 InstanceId=event['BaseInstanceId'],
-                Name='Copy of base AMI %s' % event['ResourceProperties']['AmiId']
+                Name='%s CopyAMI %s' % (uuid.uuid4(), event['ResourceProperties']['AmiId'])
               )
               image_id = response['ImageId']
               return image_id
@@ -870,6 +871,57 @@ Resources:
       Role: !GetAtt DescribeImageLambdaExecutionRole.Arn
       Runtime: python3.6
 
+  ExtractAmiFromCfn:
+    Type: Custom::ExtractAmiFromCfn
+    DependsOn:
+    - EncryptWaitCondition
+    Properties:
+      ServiceToken: !GetAtt ExtractAmiFromCfnLambda.Arn
+      CfnResponseData: !GetAtt EncryptWaitCondition.Data
+  ExtractAmiFromCfnLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Extracts AMI from Cfn response
+      Handler: index.handler
+      Runtime: python3.6
+      Role: !GetAtt ExtractAmiFromCfnLambdaRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: !Sub | 
+          import json
+          import logging
+          import threading
+          import cfnresponse
+          def timeout(event, context):
+            logging.error('Execution is about to time out, sending failure response to CloudFormation')
+            cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+          def handler(event, context):
+            timer = threading.Timer((context.get_remaining_time_in_millis() / 1000.00) - 0.5, timeout, args=[event, context])
+            timer.start()
+            print('Received event: %s' % json.dumps(event))
+            try:
+              data = event['ResourceProperties']['CfnResponseData']
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, dict(AmiId=list(data.values())[0]))
+            except Exception as e:
+              logging.error('Exception: %s' % e, exc_info=True)
+              cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+
+  ExtractAmiFromCfnLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: "/"  
+
 Outputs:
   EncryptedAmiId:
-    Value: !GetAtt EncryptWaitCondition.Data
+    Value: !GetAtt ExtractAmiFromCfn.AmiId

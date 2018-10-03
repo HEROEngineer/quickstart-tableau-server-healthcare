@@ -11,8 +11,6 @@ Metadata:
         default: Full DNS Name for Cluster
       AcceptEULA:
         default: Accept Tableau End User License Agreement
-      IPAddress:
-        default: EIP address for initial node
       InstanceType:
         default: Amazon EC2 instance type
       KeyPairName:
@@ -85,9 +83,6 @@ Parameters:
   BastionSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
     Description: Security Group for the Bastion Host
-  IPAddress:
-    Description: Provide an Elastic IP address (EIP) for the initial node (blank = no EIP)
-    Type: String
   InstanceType:
     AllowedValues:
     - c5.4xlarge
@@ -107,6 +102,11 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
   LogBucket:
     Description: S3 log bucket
+    Type: String
+  TSMAdminCIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
+    Description: The CIDR address from which you will connect to the TSM Web UI
     Type: String
   Password:
     Description: Tableau Services Manager (TSM) administrator password
@@ -188,7 +188,6 @@ Parameters:
     MinLength: 1
     Type: String
   SSLCertificateARN:
-    Default: ''
     Description: The Amazon Resource Name for the existing SSL cert you wish to use for the load balancer; empty for none
     Type: String
   SourceCIDR:
@@ -207,7 +206,6 @@ Parameters:
     Type: String
   TableauServerLicenseKey:
     Description: License Key
-    MinLength: 1
     Type: String
   Username:
     Description: Tableau Services Manager (TSM) administrator username (cannot be
@@ -322,6 +320,9 @@ Resources:
   # Create two listeners - one for HTTPS and other for TSM
   ElbListenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+    - Elb
+    - ElbTargetGroupHTTPS
     Properties:
       Certificates: 
         - CertificateArn: !Ref SSLCertificateARN
@@ -334,6 +335,9 @@ Resources:
 
   ElbListenerTSM:
     Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: 
+    - ElbTargetGroupTSM
+    - Elb
     Properties:
       Certificates: 
         - CertificateArn: !Ref SSLCertificateARN
@@ -385,14 +389,13 @@ Resources:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-single-server-windows.yaml
       Parameters:
         AcceptEULA: !Ref AcceptEULA
-        ElbTargetGroups: 
-        - !Ref ElbTargetGroupHTTPS
-        - !Ref ElbTargetGroupTSM
+        ElbTargetGroups: !Sub "${ElbTargetGroupHTTPS},${ElbTargetGroupTSM}"
         ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
         InstanceSecurityGroup: !Ref InstanceSecurityGroup
         InstanceType: !Ref InstanceType
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
+        PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds]
         RegCity: !Ref RegCity
         RegCompany: !Ref RegCompany
         RegCountry: !Ref RegCountry
@@ -404,6 +407,7 @@ Resources:
         RegPhone: !Ref RegPhone
         RegState: !Ref RegState
         RegTitle: !Ref RegTitle
+        RegZip: !Ref RegZip
         TableauServerAdminUser: !Ref TableauServerAdminUser
         TableauServerAdminPassword: !Ref TableauServerAdminPassword
         TableauServerLicenseKey: !Ref TableauServerLicenseKey

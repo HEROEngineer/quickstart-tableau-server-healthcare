@@ -9,12 +9,6 @@ Parameters:
     - 'No'
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
-  ElbTargetGroupHTTPS:
-    Type: String
-    Description: Elastic Load Balancing V2 Target Group for 443
-  ElbTargetGroupTSM:
-    Type: String
-    Description: Elastic Load Balancing V2 Target Group for TSM (8850)
   InstanceType:
     AllowedValues:
     - c5.4xlarge
@@ -38,7 +32,6 @@ Parameters:
   PrivateSubnetIds:
     Description: Private Subnet Ids to launch Tableau Server in
     Type: List<AWS::EC2::Subnet::Id>
-
   Username:
     Description: Tableau Services Manager (TSM) administrator username (cannot be
       Administrator)
@@ -63,7 +56,9 @@ Parameters:
   TableauServerLicenseKey:
     Description: License Key (leave blank for trial)
     Type: String
-  
+  ElbTargetGroups:
+    Description: ELB target groups for the ASG
+    Type: CommaDelimitedList
   RegFirstName:
     Description: First Name
     Type: String
@@ -221,9 +216,7 @@ Resources:
       LaunchConfigurationName: !Ref TableauLaunchConfig
       MaxSize: 1
       MinSize: 1
-      TargetGroupARNs:
-      - !Ref ElbTargetGroupHTTPS
-      - !Ref ElbTargetGroupTSM
+      TargetGroupARNs: !Ref ElbTargetGroups
       VPCZoneIdentifier: !Ref PrivateSubnetIds
     CreationPolicy:
       ResourceSignal:

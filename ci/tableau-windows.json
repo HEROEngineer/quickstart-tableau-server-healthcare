@@ -5,11 +5,11 @@
     },
     {
         "ParameterKey": "AWSHostedZoneID",
-        "ParameterValue": "Z3AUDQLV95DIKK"
+        "ParameterValue": "Z20J45NCQ1BKQT"
     },
     {
         "ParameterKey": "AWSPublicFQDN",
-        "ParameterValue": "tableau-hc.t.quickstart.awspartner.com"
+        "ParameterValue": "ajfriedm.andglenn.lab.myinstance.com"
     },
     {
         "ParameterKey": "AcceptEULA",
@@ -92,10 +92,6 @@
         "ParameterValue": "98101"
     },
     {
-        "ParameterKey": "SSLCertificateARN",
-        "ParameterValue": ""
-    },
-    {
         "ParameterKey": "SourceCIDR",
         "ParameterValue": "0.0.0.0/0"
     },
@@ -103,7 +99,6 @@
         "ParameterKey": "TableauServerAdminUser",
         "ParameterValue": "test"
     },
-
     {
         "ParameterKey": "TableauServerAdminPassword",
         "ParameterValue": "test1234"
