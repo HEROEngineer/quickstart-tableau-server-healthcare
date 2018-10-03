@@ -900,7 +900,7 @@ Resources:
             timer.start()
             print('Received event: %s' % json.dumps(event))
             try:
-              data = event['ResourceProperties']['CfnResponseData']
+              data = json.loads(event['ResourceProperties']['CfnResponseData'])
               cfnresponse.send(event, context, cfnresponse.SUCCESS, dict(AmiId=list(data.values())[0]))
             except Exception as e:
               logging.error('Exception: %s' % e, exc_info=True)

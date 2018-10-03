@@ -14,5 +14,5 @@ tests:
     parameter_input: tableau-windows.json
     template_file: tableau-server-master.yaml
     regions:
-      - us-east-1
+      - us-west-2
 

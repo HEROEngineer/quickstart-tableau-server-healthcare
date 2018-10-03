@@ -388,6 +388,7 @@ Resources:
         RegZip: !Ref RegZip
         RegCountry: !Ref RegCountry
         TSMAdminCIDR: !Ref TSMAdminCIDR
+        VpcCidr: !GetAtt VPCStack.Outputs.VPCCIDR
         VpcId: !GetAtt VPCStack.Outputs.VPCID
         
 Outputs:

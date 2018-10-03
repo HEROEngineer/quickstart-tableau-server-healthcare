@@ -120,6 +120,9 @@ Parameters:
   PrivateSubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
     Description: Private subnets in your VPC
+  VpcCidr:
+    Type: String
+    Description: VPC CIDR
   QSS3BucketName:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -318,6 +321,26 @@ Resources:
       Type: application
 
   # Create two listeners - one for HTTPS and other for TSM
+  ElbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Elb Security Group for Tableau Server
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: !Ref VpcCidr
+      - IpProtocol: tcp
+        FromPort: 8850
+        ToPort: 8850
+        CidrIp: !Ref VpcCidr
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: !Ref SourceCIDR
+      VpcId: !Ref VpcId
+
   ElbListenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn:
@@ -351,6 +374,10 @@ Resources:
   ElbTargetGroupHTTPS:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 5
       Port: 443
       Protocol: HTTPS
       VpcId: !Ref VpcId
@@ -358,6 +385,10 @@ Resources:
   ElbTargetGroupTSM:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 5
       Port: 8850
       Protocol: HTTPS
       VpcId: !Ref VpcId
@@ -385,6 +416,7 @@ Resources:
   TableauServerWindows:
     Type: AWS::CloudFormation::Stack
     Condition: IsWindows
+    DependsOn: EncryptAmiStack
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-single-server-windows.yaml
       Parameters:
