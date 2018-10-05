@@ -327,31 +327,10 @@ Resources:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
   #    Parameters:
 
-  CopyLambdaStack:
-    DependsOn: VPCStack
-    Type: AWS::CloudFormation::Stack
-    Properties: 
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/copy-lambdas.yaml
-      Parameters:
-        QSS3BucketName: !Ref QSS3BucketName
-        QSS3KeyPrefix: !Ref QSS3KeyPrefix
-
-  ConfigureSSLStack:
-    DependsOn: CopyLambdaStack
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/acm-route53.yaml
-      Parameters:
-        LambdaZipsBucketName: !GetAtt CopyLambdaStack.Outputs.LambdaZipsBucket
-        QSS3KeyPrefix: !Ref QSS3KeyPrefix
-        DomainName: !Ref AWSPublicFQDN
-        HostedZoneID: !Ref AWSHostedZoneID
-
   TableauStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
     - VPCStack
-    - ConfigureSSLStack
     - LogStack
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server.yaml
@@ -370,7 +349,6 @@ Resources:
         PublicSubnetIds: !Sub "${VPCStack.Outputs.PublicSubnet1ID},${VPCStack.Outputs.PublicSubnet2ID}"
         BastionSecurityGroup: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.SecurityGroup, !GetAtt BastionHostLinux.Outputs.BastionSecurityGroupID ]
         SourceCIDR: !Ref SourceCIDR
-        SSLCertificateARN: !GetAtt ConfigureSSLStack.Outputs.ACMCertificate
         Username: !Ref Username
         TableauServerAdminUser: !Ref TableauServerAdminUser
         TableauServerAdminPassword: !Ref TableauServerAdminPassword

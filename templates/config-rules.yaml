@@ -4,8 +4,7 @@ Description: CloudFormation Template for config rules
 Parameters:
   LogBucketName:
     Type: String
-    Default: ''
-    Description: Log bucket. If blank, will create a new bucket
+    Description: Log bucket
   
 
 Resources:
@@ -106,8 +105,6 @@ Resources:
       Scope:
       Source:
         Owner: CUSTOM_LAMBDA
-
-
 
   # EBS volume changes detected
   EBSVolumeEncryption:

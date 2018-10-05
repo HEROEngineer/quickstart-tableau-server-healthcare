@@ -45,8 +45,6 @@ Metadata:
         default: Title
       RegZip:
         default: Zip/Postal Code
-      SSLCertificateARN:
-        default: SSL Certificate ARN (Requires matching DNS name)
       SourceCIDR:
         default: Source CIDR for Access
       TableauServerAdminPassword:
@@ -190,9 +188,6 @@ Parameters:
     Description: ZIP/Postal Code
     MinLength: 1
     Type: String
-  SSLCertificateARN:
-    Description: The Amazon Resource Name for the existing SSL cert you wish to use for the load balancer; empty for none
-    Type: String
   SourceCIDR:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
     ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
@@ -305,9 +300,30 @@ Resources:
         AmiRegion: !Ref "AWS::Region"
         SubnetId: !Select [ 0, !Ref PrivateSubnetIds ]
 
+  # Create the ELB
+  CopyLambdaStack:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/copy-lambdas.yaml
+      Parameters:
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+
+  ConfigureSSLStack:
+    DependsOn: CopyLambdaStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/acm-route53.yaml
+      Parameters:
+        LambdaZipsBucketName: !GetAtt CopyLambdaStack.Outputs.LambdaZipsBucket
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        DomainName: !Ref AWSPublicFQDN
+        HostedZoneID: !Ref AWSHostedZoneID
+
   # Next, create the Elb in a public subnet
   Elb:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DependsOn: ConfigureSSLStack
     Properties:
       LoadBalancerAttributes:
       - Key: access_logs.s3.enabled
@@ -348,7 +364,7 @@ Resources:
     - ElbTargetGroupHTTPS
     Properties:
       Certificates: 
-        - CertificateArn: !Ref SSLCertificateARN
+        - CertificateArn: !GetAtt ConfigureSSLStack.Outputs.ACMCertificate
       DefaultActions:
       - Type: forward
         TargetGroupArn: !Ref ElbTargetGroupHTTPS
@@ -363,7 +379,7 @@ Resources:
     - Elb
     Properties:
       Certificates: 
-        - CertificateArn: !Ref SSLCertificateARN
+        - CertificateArn: !GetAtt ConfigureSSLStack.Outputs.ACMCertificate
       DefaultActions:
       - Type: forward
         TargetGroupArn: !Ref ElbTargetGroupTSM

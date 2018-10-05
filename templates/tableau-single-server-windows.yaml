@@ -212,7 +212,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       DesiredCapacity: 1
-      HealthCheckGracePeriod: 3000
+      HealthCheckGracePeriod: 6000
       HealthCheckType: ELB
       LaunchConfigurationName: !Ref TableauLaunchConfig
       MaxSize: 1
@@ -238,7 +238,7 @@ Resources:
                     "local_admin_pass": "${Password}",
                     "content_admin_user": "${TableauServerAdminUser}",
                     "content_admin_pass": "${TableauServerAdminPassword}",
-                    "product_keys": "${TrialOrLicenseKey}"
+                    "product_keys": ["${TrialOrLicenseKey}"]
                   }
                 - TrialOrLicenseKey: !If [ IsTrial, trial, !Ref TableauServerLicenseKey ]
             c:\tabsetup\registration.json:
@@ -257,6 +257,16 @@ Resources:
                   "zip": "${RegZip}",
                   "country": "${RegCountry}"
                 }
+            c:\tabsetup\manageFirewallPorts.py:
+              source:
+                Fn::Join:
+                - ''
+                - - https://
+                  - Fn::FindInMap:
+                    - DefaultConfiguration
+                    - InstallationConfig
+                    - InstallationBucket
+                  - ".s3-us-west-2.amazonaws.com/manageFirewallPorts.py"
             c:\tabsetup\SilentInstaller.py:
               source:
                 Fn::Join:
@@ -276,55 +286,95 @@ Resources:
                       "type": "local"
                     }
                   },
-                  "topologyVerison": {}
+                  "topologyVersion": {}
                 }
             c:\tabsetup\python-3.6.4-amd64.exe:
               source: https://www.python.org/ftp/python/3.6.4/python-3.6.4-amd64.exe
-            c:\tabsetup\sign_cert.py:
+            c:\tabsetup\enable_ssl.py:
               content: !Sub |
                 import os
                 import subprocess
                 import shlex
                 import argparse
-                def get_version(version_path):
+                def get_version(version_folder):
+                  version_path = [ os.path.join(version_folder,_) for _ in os.listdir(version_folder) if os.path.isfile(os.path.join(version_folder,_)) and 'TableauServerInstallerVersion' in _][0]
+
                   with open(version_path, 'r') as f:
-                    version = f.readline().strip()
+                    version = f.readline().strip().split()[-1]
+                    print (version)
                   return version
+
                 def generate_key(openssl_path, openssl_conf_path, private_key_name, bit_length=4096):
                   cmd = '"%s" genrsa -out %s %s' % (openssl_path, private_key_name, bit_length)
+                  print (cmd)
                   subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
+
                 def generate_csr(openssl_path, openssl_conf_path, private_key_name, csr_name):
-                  cmd = '"%s" req -new -key %s -out %s' % (openssl_path, private_key_name, csr_name)
+                  cmd = '"%s" req -new -key %s -out %s -subj "/C=US/ST=Washington/L=Seattle/O=MyOrg/OU=MyDept/CN=example.com"' % (openssl_path, private_key_name, csr_name)
+                  print (cmd)
                   subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
+
                 def sign_cert(openssl_path, openssl_conf_path, private_key_name, csr_name, cert_name):
                   cmd = '"%s" x509 -req -days 365 -in %s -signkey %s -out %s' % (openssl_path, csr_name, private_key_name, cert_name)
+                  print (cmd)
                   subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
+
+                def update_tsm(tsm_path, cert_name, private_key_name):
+                  cmd = '"%s" security external-ssl enable --cert-file %s --key-file %s' % (tsm_path, cert_name, private_key_name)
+                  print (cmd)
+                  subprocess.run(shlex.split(cmd))
+
+                def apply_changes(tsm_path):
+                  cmd = '"%s" pending-changes apply' % tsm_path
+                  print (cmd)
+                  subprocess.run(shlex.split(cmd))
+
                 def main():
                   parser = argparse.ArgumentParser()
-                  parser.add_argument('--version_path', type=str, required=True)
+                  parser.add_argument('--version_folder', type=str, required=True)
                   parser.add_argument('--install_dir', type=str, required=True)
                   parser.add_argument('--ssl_prefix', type=str, default='tableau_quickstart')
                   args = parser.parse_args()
-                  version_path = args.version_path
+                  version_folder = args.version_folder
                   install_dir = args.install_dir
                   ssl_prefix = args.ssl_prefix
+
                   # First get the version
-                  version = get_version(version_path)
+                  version = get_version(version_folder)
+
                   # Next create a ssl directory
                   ssl_dir = os.path.join(install_dir, 'ssl')
                   os.mkdir(ssl_dir)
-                  # Get paths for openssl conf and binary
+
+                  # Get paths for openssl conf, openssl binary, and tsm
                   openssl_conf_path = os.path.join(install_dir, 'packages', 'apache.%s' % version, 'conf', 'openssl.cnf')
                   openssl_path = os.path.join(install_dir, 'packages', 'apache.%s' % version, 'bin', 'openssl.exe')
+                  tsm_path = os.path.join(install_dir, 'packages', 'bin.%s' % version , 'tsm.cmd')
+
                   # generate key
-                  private_key_name = ssl_prefix + '.key'
+                  print ('Generating Key...')
+                  private_key_name = os.path.join(ssl_dir, ssl_prefix + '.key')
                   generate_key(openssl_path, openssl_conf_path, private_key_name)
+
                   # generate csr
-                  csr_name = ssl_prefix + '.csr'
+                  print ('Generating Certificate Request...')
+                  csr_name = os.path.join(ssl_dir, ssl_prefix + '.csr')
                   generate_csr(openssl_path, openssl_conf_path, private_key_name, csr_name)
+
                   # sign cert
-                  cert_name = ssl_prefix + '.crt'
+                  print ('Signing Certificate...')
+                  cert_name = os.path.join(ssl_dir, ssl_prefix + '.crt')
                   sign_cert(openssl_path, openssl_conf_path, private_key_name, csr_name, cert_name)
+
+                  # enable tsm
+                  print ('Updating TSM with SSL...')
+                  update_tsm(tsm_path, cert_name, private_key_name)
+                  
+                  # apply changes to tsm
+                  print ('Applying TSM changes...')
+                  apply_changes(tsm_path)
+
+                  print ("SSL cert setup successful")
                 if __name__ == "__main__":
                   main()
             c:\tabsetup\tableau-server-webapp-installer.exe:
@@ -342,6 +392,9 @@ Resources:
                     - InstallationConfig
                     - InstallationExecutable
           commands:
+            00-disable-firewall:
+              cwd: c:\Windows\System32
+              command: netsh advfirewall set allprofiles state off
             01-install-python:
               command: c:\tabsetup\python-3.6.4-amd64.exe /quiet InstallAllUsers=1 PrependPath=1
               cwd: c:\tabsetup
@@ -356,23 +409,13 @@ Resources:
               waitAfterCompletion: 0
             04-run-installer:
               cwd: c:\tabsetup
-              command: '"C:\Program Files\Python36\python.exe" SilentInstaller.py install --secretsFile c:\tabsetup\secrets.json --registrationFile c:\tabsetup\registration.json --configFile c:\tabsetup\config.json --installDir d:\tableau c:\tabsetup\tableau-server-webapp-installer.exe > c:\tabsetup\tsm_installer-output.txt 2>&1'
+              command: '"C:\Program Files\Python36\python.exe" SilentInstaller.py install --secretsFile c:\tabsetup\secrets.json --registrationFile c:\tabsetup\registration.json --configFile c:\tabsetup\config.json --installDir d:\tableau --dataDir d:\tableau c:\tabsetup\tableau-server-webapp-installer.exe 1> c:\tabsetup\tsm_installer-output.txt 2>&1'
               waitAfterCompletion: 0
-            05-get-version:
+            06-enable-ssl:
               cwd: c:\tabsetup
-              command: tsm version > c:\tabsetup\tsm_version.txt
-            06-sign-cert:
-              cwd: c:\tabsetup
-              command: '"C:\Program Files\Python36\python.exe" sign_cert.py --install_dir d:\tableau --version_path c:\tabsetup\tsm_version.txt --ssl_prefix tableau_quickstart'
-            07-enable-ssl:
-              cwd: d:\tableau\SSL
-              command: tsm security external-ssl enable --cert-file tableau_quickstart.crt --key-file tableau_quickstart.key
-              waitAftercompletion: 0
-            08-apply-changes:
-              cwd: c:\tabsetup
-              command: tsm pending-changes apply
+              command: '"C:\Program Files\Python36\python.exe" enable_ssl.py --install_dir d:\tableau --version_folder c:\Users\Administrator\AppData\Local\Temp\ --ssl_prefix tableau_quickstart > c:\tabsetup\enable_ssl.txt 2>&1'
               waitAfterCompletion: 0
-            09-cleanup-secrets:
+            07-cleanup-secrets:
               cwd: c:\tabsetup
               command: del c:\tabsetup\secrets.json
               waitAfterCompletion: 0
@@ -388,7 +431,8 @@ Resources:
           Encrypted: true
           VolumeSize: !FindInMap [ DefaultConfiguration, MachineConfiguration, DataVolumeSize ]
           VolumeType: gp2
-      ImageId: !Ref ImageId
+      #ImageId: !Ref ImageId
+      ImageId:  ami-bbd6a7c3
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyPairName
       SecurityGroups:
