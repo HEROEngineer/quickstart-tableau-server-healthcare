@@ -375,7 +375,7 @@ Outputs:
     Value: !GetAtt VPCStack.Outputs.VPCID
   LoadBalancerDNSName:
     Description: DNS Name for the load balancer
-    Value: !GetAtt TableauStack.Outputs.LoadBalancerDNSName
+    Value: !GetAtt TableauStack.Outputs.ElbDns
 #  BastionEIP:
 #    Description: Public DNS name of bastion host
 #    Value: !GetAtt BastionHost.Outputs.EIP1
