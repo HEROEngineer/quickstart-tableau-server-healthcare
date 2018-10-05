@@ -305,27 +305,27 @@ Resources:
                   return version
 
                 def generate_key(openssl_path, openssl_conf_path, private_key_name, bit_length=4096):
-                  cmd = '"%s" genrsa -out %s %s' % (openssl_path, private_key_name, bit_length)
+                  cmd = '"%s" genrsa -out "%s" "%s"' % (openssl_path, private_key_name, bit_length)
                   print (cmd)
                   subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
 
                 def generate_csr(openssl_path, openssl_conf_path, private_key_name, csr_name):
-                  cmd = '"%s" req -new -key %s -out %s -subj "/C=US/ST=Washington/L=Seattle/O=MyOrg/OU=MyDept/CN=example.com"' % (openssl_path, private_key_name, csr_name)
+                  cmd = '"%s" req -new -key "%s" -out "%s" -subj "/C=US/ST=Washington/L=Seattle/O=MyOrg/OU=MyDept/CN=example.com"' % (openssl_path, private_key_name, csr_name)
                   print (cmd)
                   subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
 
                 def sign_cert(openssl_path, openssl_conf_path, private_key_name, csr_name, cert_name):
-                  cmd = '"%s" x509 -req -days 365 -in %s -signkey %s -out %s' % (openssl_path, csr_name, private_key_name, cert_name)
+                  cmd = '"%s" x509 -req -days 365 -in "%s" -signkey "%s" -out "%s"' % (openssl_path, csr_name, private_key_name, cert_name)
                   print (cmd)
                   subprocess.run(shlex.split(cmd), env={'OPENSSL_CONF': openssl_conf_path})
 
                 def update_tsm(tsm_path, cert_name, private_key_name):
-                  cmd = '"%s" security external-ssl enable --cert-file %s --key-file %s' % (tsm_path, cert_name, private_key_name)
+                  cmd = '"%s" security external-ssl enable --cert-file "%s" --key-file "%s"' % (tsm_path, cert_name, private_key_name)
                   print (cmd)
                   subprocess.run(shlex.split(cmd))
 
                 def apply_changes(tsm_path):
-                  cmd = '"%s" pending-changes apply' % tsm_path
+                  cmd = '"%s" pending-changes apply --ignore-prompt' % tsm_path
                   print (cmd)
                   subprocess.run(shlex.split(cmd))
 

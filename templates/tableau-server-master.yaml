@@ -381,4 +381,4 @@ Outputs:
 #    Value: !GetAtt BastionHost.Outputs.EIP1
   TableauServerURL:
     Description: Public DNS name to reach cluster
-    Value: !GetAtt TableauStack.Outputs.TableauServerURL
+    Value: !GetAtt TableauStack.Outputs.ElbDns

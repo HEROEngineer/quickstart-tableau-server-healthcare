@@ -409,6 +409,18 @@ Resources:
       Protocol: HTTPS
       VpcId: !Ref VpcId
 
+  RecordAlias:
+    Type: AWS::Route53::RecordSet
+    DependsOn:
+    - Elb
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt Elb.DNSName
+        HostedZoneId: !GetAtt Elb.CanonicalHostedZoneID
+      HostedZoneId: !Ref AWSHostedZoneID
+      Name: !Ref AWSPublicFQDN
+      Type: A
+
   # Configure Instance Security Group
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
