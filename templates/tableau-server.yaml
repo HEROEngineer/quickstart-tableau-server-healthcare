@@ -333,6 +333,8 @@ Resources:
       - Key: access_logs.s3.prefix
         Value: tableau-elb-logs
       Scheme: internet-facing
+      SecurityGroups:
+      - !Ref ElbSecurityGroup
       Subnets: !Ref PublicSubnetIds
       Type: application
 
@@ -434,11 +436,11 @@ Resources:
       - IpProtocol: tcp
         FromPort: 8850
         ToPort: 8850
-        SourceSecurityGroupId: !Select [ 0, !GetAtt Elb.SecurityGroups ]
+        SourceSecurityGroupId: !Ref ElbSecurityGroup
       - IpProtocol: tcp
         FromPort: 443
         ToPort: 443
-        SourceSecurityGroupId: !Select [ 0, !GetAtt Elb.SecurityGroups ]
+        SourceSecurityGroupId: !Ref ElbSecurityGroup
       VpcId: !Ref VpcId
 
   TableauServerWindows:
