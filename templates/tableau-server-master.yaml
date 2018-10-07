@@ -381,4 +381,7 @@ Outputs:
 #    Value: !GetAtt BastionHost.Outputs.EIP1
   TableauServerURL:
     Description: Public DNS name to reach cluster
-    Value: !GetAtt TableauStack.Outputs.ElbDns
+    Value: !Sub https://${AWSPublicFQDN}
+  TSMUrl:
+    Description: URL to access TSM GUI
+    Value: !Sub https://${AWSPublicFQDN}:8850
