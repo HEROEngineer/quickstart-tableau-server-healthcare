@@ -112,6 +112,9 @@ Outputs:
   BastionDNSName:
     Description: Public DNS name of bastion host
     Value: !GetAtt BastionHost.PublicDnsName
+  BastionIP:
+    Description: Public IP address of Bastion Host
+    Value: !GetAtt BastionHost.PublicIp
   SecurityGroup:
     Description: Baston Security Group
     Value: !Ref BastionSecurityGroup

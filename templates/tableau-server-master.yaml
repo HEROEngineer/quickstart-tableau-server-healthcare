@@ -252,11 +252,6 @@ Parameters:
     Description: Tableau Services Manager (TSM) administrator username (cannot be 'tableau' or 'tsmagent' or 'admin' or 'root')
     MaxLength: 30
     Type: String
-  TSMAdminCIDR:
-    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: The CIDR address from which you will connect to the TSM Web UI
-    Type: String
   BastionAdminCIDR:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
@@ -291,47 +286,27 @@ Resources:
         PublicSubnet2CIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PublicSubnet2CIDR ]
         VPCCIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, VPCCIDR ]
 
-  BastionHostWindows:
+  BastionStack:
     Type: AWS::CloudFormation::Stack
-    Condition: IsWindows
     DependsOn:
     - VPCStack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/windows-bastion.yaml
-      Parameters:
-        InstanceType: !FindInMap [ DefaultConfiguration, MachineConfiguration, BastionInstanceType ]
-        KeyPairName: !Ref KeyPairName
-        SourceCIDR: !Ref BastionAdminCIDR
-        SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1ID
-        VPCID: !GetAtt VPCStack.Outputs.VPCID
-  BastionHostLinux:
-    Type: AWS::CloudFormation::Stack
-    Condition: IsLinux
-    DependsOn:
-    - VPCStack
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-linux-bastion/templates/linux-bastion.template
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/bastion.yaml
       Parameters:
         BastionInstanceType: !FindInMap [ DefaultConfiguration, MachineConfiguration, BastionInstanceType ]
         KeyPairName: !Ref KeyPairName
         RemoteAccessCIDR: !Ref BastionAdminCIDR
         PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
         PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
         VPCID: !GetAtt VPCStack.Outputs.VPCID
-  
-  LogStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn:
-    - VPCStack
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
-  #    Parameters:
+        WindowsOrLinux: !If [ IsWindows, windows, linux ]
 
   TableauStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
     - VPCStack
-    - LogStack
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server.yaml
       Parameters:
@@ -340,14 +315,13 @@ Resources:
         AWSPublicFQDN: !Ref AWSPublicFQDN
         AcceptEULA: !Ref AcceptEULA
         InstanceType: !Ref InstanceType
-        LogBucket: !GetAtt LogStack.Outputs.LogBucket
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         PrivateSubnetIds: !Sub "${VPCStack.Outputs.PrivateSubnet1AID},${VPCStack.Outputs.PrivateSubnet2AID}"
         PublicSubnetIds: !Sub "${VPCStack.Outputs.PublicSubnet1ID},${VPCStack.Outputs.PublicSubnet2ID}"
-        BastionSecurityGroup: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.SecurityGroup, !GetAtt BastionHostLinux.Outputs.BastionSecurityGroupID ]
+        BastionSecurityGroup: !GetAtt BastionStack.Outputs.BastionSecurityGroupID
         SourceCIDR: !Ref SourceCIDR
         Username: !Ref Username
         TableauServerAdminUser: !Ref TableauServerAdminUser
@@ -365,7 +339,6 @@ Resources:
         RegState: !Ref RegState
         RegZip: !Ref RegZip
         RegCountry: !Ref RegCountry
-        TSMAdminCIDR: !Ref TSMAdminCIDR
         VpcCidr: !GetAtt VPCStack.Outputs.VPCCIDR
         VpcId: !GetAtt VPCStack.Outputs.VPCID
         
@@ -376,12 +349,12 @@ Outputs:
   LoadBalancerDNSName:
     Description: DNS Name for the load balancer
     Value: !GetAtt TableauStack.Outputs.ElbDns
-#  BastionEIP:
-#    Description: Public DNS name of bastion host
-#    Value: !GetAtt BastionHost.Outputs.EIP1
+  BastionEIP:
+    Description: Public DNS name of bastion host
+    Value: !GetAtt BastionStack.Outputs.BastionPublicIp
   TableauServerURL:
     Description: Public DNS name to reach cluster
     Value: !Sub https://${AWSPublicFQDN}
   TSMUrl:
-    Description: URL to access TSM GUI
+    Description: URL to access TSM GUI. Accessible via Bastion Host
     Value: !Sub https://${AWSPublicFQDN}:8850

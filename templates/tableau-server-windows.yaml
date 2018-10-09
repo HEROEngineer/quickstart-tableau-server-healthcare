@@ -107,7 +107,6 @@ Parameters:
     Description: Country
     Type: String
     MinLength: '1'
-
   ImageId:
     Type: AWS::EC2::Image::Id
     Description: AmiId
@@ -257,16 +256,6 @@ Resources:
                   "zip": "${RegZip}",
                   "country": "${RegCountry}"
                 }
-            c:\tabsetup\manageFirewallPorts.py:
-              source:
-                Fn::Join:
-                - ''
-                - - https://
-                  - Fn::FindInMap:
-                    - DefaultConfiguration
-                    - InstallationConfig
-                    - InstallationBucket
-                  - ".s3-us-west-2.amazonaws.com/manageFirewallPorts.py"
             c:\tabsetup\SilentInstaller.py:
               source:
                 Fn::Join:
@@ -431,8 +420,7 @@ Resources:
           Encrypted: true
           VolumeSize: !FindInMap [ DefaultConfiguration, MachineConfiguration, DataVolumeSize ]
           VolumeType: gp2
-      #ImageId: !Ref ImageId
-      ImageId:  ami-bbd6a7c3
+      ImageId: !Ref ImageId
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyPairName
       SecurityGroups:

@@ -98,14 +98,6 @@ Parameters:
     ConstraintDescription: must be the name of an existing EC2 KeyPair.
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
     Type: AWS::EC2::KeyPair::KeyName
-  LogBucket:
-    Description: S3 log bucket
-    Type: String
-  TSMAdminCIDR:
-    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: The CIDR address from which you will connect to the TSM Web UI
-    Type: String
   Password:
     Description: Tableau Services Manager (TSM) administrator password
     Type: String
@@ -218,65 +210,85 @@ Parameters:
 Mappings:
   AWSAMIRegionMap:
     AMI:
-      CENTOS7HVM: CentOS Linux 7 x86_64 HVM EBS ENA 1804_2-b7ee8a69-ee97-4a49-9e68-afaee216db2e-ami-55a2322a.4
-      US1604HVM: ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20180509
-      WS2012R2: Windows_Server-2012-R2_RTM-English-64Bit-Base-2018.05.09
+      CENTOS7HVM: CentOS Linux 7 x86_64 HVM 1805_01
+      US1604HVM: Ubuntu 16.04 LTS HVM 20180912
+      WS2012R2: Windows_Server-2012-R2_RTM-English-64Bit-Base-2018.09.15
+      ALINUX2: Amazon-Linux-2 LTS amzn2-ami-hvm-2.0.20180924-x86_64-gp2 
     ap-northeast-1:
-      CENTOS7HVM: ami-3185744e
-      US1604HVM: ami-cbb259b4
-      WS2012R2: ami-9be803e4
+      CENTOS7HVM: ami-8e8847f1
+      US1604HVM: ami-06c43a7df16e8213c
+      WS2012R2: ami-0f94c740726599c3a
+      ALINUX2: ami-06962fe7164c1fe7b
     ap-northeast-2:
-      CENTOS7HVM: ami-46963e28
-      US1604HVM: ami-191cb577
-      WS2012R2: ami-4a1eb724
+      CENTOS7HVM: ami-bf9c36d1
+      US1604HVM: ami-0e0f4ff1154834540
+      WS2012R2: ami-0f033ac3427fcdad0
+      ALINUX2: ami-02e495c61af26da99
     ap-south-1:
-      CENTOS7HVM: ami-48301d27
-      US1604HVM: ami-ff80a390
-      WS2012R2: ami-2289aa4d
+      CENTOS7HVM: ami-1780a878
+      US1604HVM: ami-04ea996e7a3e7ad6b
+      WS2012R2: ami-0d5f824867e8aeaf6
+      ALINUX2: ami-0b173ae0d9e71699a
     ap-southeast-1:
-      CENTOS7HVM: ami-da6151a6
-      US1604HVM: ami-d62014aa
-      WS2012R2: ami-14a89d68
+      CENTOS7HVM: ami-8e0205f2
+      US1604HVM: ami-0eb1f21bbd66347fe
+      WS2012R2: ami-0f42104b50a572747
+      ALINUX2: ami-0f67499750e64577a
     ap-southeast-2:
-      CENTOS7HVM: ami-0d13c26f
-      US1604HVM: ami-9176a1f3
-      WS2012R2: ami-c971a6ab
+      CENTOS7HVM: ami-d8c21dba
+      US1604HVM: ami-0789a5fb42dcccc10
+      WS2012R2: ami-06f2dbd8cdf99fd40
+      ALINUX2: ami-0e2b2114bf2fac7d8
     ca-central-1:
-      CENTOS7HVM: ami-456aea21
-      US1604HVM: ami-fe93139a
-      WS2012R2: ami-4a97172e
+      CENTOS7HVM: ami-e802818c
+      US1604HVM: ami-0f2cb2729acf8f494
+      WS2012R2: ami-0bc1f82c15f6cb011
+      ALINUX2: ami-0c612fea430136cb0
     eu-central-1:
-      CENTOS7HVM: ami-9a183671
-      US1604HVM: ami-e3381508
-      WS2012R2: ami-3c0f22d7
+      CENTOS7HVM: ami-dd3c0f36
+      US1604HVM: ami-086a09d5b9fa35dc7
+      WS2012R2: ami-09f85c4c3e4a1ca3b
+      ALINUX2: ami-0e82b8b6afa30f2cd
     eu-west-1:
-      CENTOS7HVM: ami-4c457735
-      US1604HVM: ami-895e69f0
-      WS2012R2: ami-4390a43a
+      CENTOS7HVM: ami-3548444c
+      US1604HVM: ami-0773391ae604c49a4
+      WS2012R2: ami-019526e560b1c9df4
+      ALINUX2: ami-0eafb5ee12a2cbffc
     eu-west-2:
-      CENTOS7HVM: ami-4726cb20
-      US1604HVM: ami-3d43a15a
-      WS2012R2: ami-e940a28e
+      CENTOS7HVM: ami-00846a67
+      US1604HVM: ami-061a2d878e5754b62
+      WS2012R2: ami-068ee8cde1f60ca7f
+      ALINUX2: ami-0135b45434a538069
+    eu-west-3:
+      CENTOS7HVM: ami-262e9f5b
+      US1604HVM: ami-075b44448d2276521
+      WS2012R2: ami-014aa0eab0ec618d6
+      ALINUX2: ami-07e5d89c9e173f360
     sa-east-1:
-      CENTOS7HVM: ami-c2e6baae
-      US1604HVM: ami-05dd8069
-      WS2012R2: ami-b9df82d5
+      CENTOS7HVM: ami-cb5803a7
+      US1604HVM: ami-0318cb6e2f90d688b
+      WS2012R2: ami-04fddd42220f1829a
+      ALINUX2: ami-0e4c9b46b89ddd90c
     us-east-1:
-      CENTOS7HVM: ami-d5bf2caa
-      US1604HVM: ami-5c66ea23
-      WS2012R2: ami-2a9a1655
+      CENTOS7HVM: ami-9887c6e7
+      US1604HVM: ami-059eeca93cf09eebd
+      WS2012R2: ami-04b06bdb58cae787d
+      ALINUX2: ami-0e6d2e8684d4ccb3e
     us-east-2:
-      CENTOS7HVM: ami-77724e12
-      US1604HVM: ami-cf172aaa
-      WS2012R2: ami-ee112c8b
+      CENTOS7HVM: ami-9c0638f9
+      US1604HVM: ami-0782e9ee97725263d
+      WS2012R2: ami-08c59800a21429561
+      ALINUX2: ami-0785b10e84f9dbd4f
     us-west-1:
-      CENTOS7HVM: ami-3b89905b
-      US1604HVM: ami-44273924
-      WS2012R2: ami-63253b03
+      CENTOS7HVM: ami-4826c22b
+      US1604HVM: ami-0ad16744583f21877
+      WS2012R2: ami-08f6003bf4d50fe60
+      ALINUX2: ami-01eb1709d6ad69035
     us-west-2:
-      CENTOS7HVM: ami-5490ed2c
-      US1604HVM: ami-b5ed9ccd
-      WS2012R2: ami-bbd6a7c3
+      CENTOS7HVM: ami-3ecc8f46
+      US1604HVM: ami-0e32ec5bc225539f5
+      WS2012R2: ami-0d1a1bbc1331e97f7
+      ALINUX2: ami-0fcd5791ba781e98f
   AWSAMINameMap:
     CentOS-7-HVM:
       Code: CENTOS7HVM
@@ -284,13 +296,22 @@ Mappings:
       Code: US1604HVM
     Windows-Server-2012-R2: 
       Code: WS2012R2
+    Amazon-Linux-2:
+      Code: ALINUX2
 
 Conditions:
   IsWindows: !Equals [ !Ref AMIOS, Windows-Server-2012-R2 ]
   IsLinux: !Not [ Condition: IsWindows ]
 
 Resources:
-  # First, encrypt the AMI root volume
+  # Create a log bucket
+  LogStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
+  #    Parameters:
+
+  # Encrypt the AMI root volume
   EncryptAmiStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -301,127 +322,21 @@ Resources:
         SubnetId: !Select [ 0, !Ref PrivateSubnetIds ]
 
   # Create the ELB
-  CopyLambdaStack:
+  ElbStack:
     Type: AWS::CloudFormation::Stack
-    Properties: 
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/copy-lambdas.yaml
+    DependsOn: LogStack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/encrypted-elb.yaml
       Parameters:
+        AWSHostedZoneID: !Ref AWSHostedZoneID
+        AWSPublicFQDN: !Ref AWSPublicFQDN
+        LogBucket: !GetAtt LogStack.Outputs.LogBucket
+        PublicSubnetIds: !Join [ ',', !Ref PublicSubnetIds ]
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
-
-  ConfigureSSLStack:
-    DependsOn: CopyLambdaStack
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/acm-route53.yaml
-      Parameters:
-        LambdaZipsBucketName: !GetAtt CopyLambdaStack.Outputs.LambdaZipsBucket
-        QSS3KeyPrefix: !Ref QSS3KeyPrefix
-        DomainName: !Ref AWSPublicFQDN
-        HostedZoneID: !Ref AWSHostedZoneID
-
-  # Next, create the Elb in a public subnet
-  Elb:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    DependsOn: ConfigureSSLStack
-    Properties:
-      LoadBalancerAttributes:
-      - Key: access_logs.s3.enabled
-        Value: true
-      - Key: access_logs.s3.bucket
-        Value: !Ref LogBucket
-      - Key: access_logs.s3.prefix
-        Value: tableau-elb-logs
-      Scheme: internet-facing
-      SecurityGroups:
-      - !Ref ElbSecurityGroup
-      Subnets: !Ref PublicSubnetIds
-      Type: application
-
-  # Create two listeners - one for HTTPS and other for TSM
-  ElbSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Elb Security Group for Tableau Server
-      SecurityGroupEgress:
-      - IpProtocol: tcp
-        FromPort: 443
-        ToPort: 443
-        CidrIp: !Ref VpcCidr
-      - IpProtocol: tcp
-        FromPort: 8850
-        ToPort: 8850
-        CidrIp: !Ref VpcCidr
-      SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 0
-        ToPort: 65535
-        CidrIp: !Ref SourceCIDR
-      VpcId: !Ref VpcId
-
-  ElbListenerHTTPS:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    DependsOn:
-    - Elb
-    - ElbTargetGroupHTTPS
-    Properties:
-      Certificates: 
-        - CertificateArn: !GetAtt ConfigureSSLStack.Outputs.ACMCertificate
-      DefaultActions:
-      - Type: forward
-        TargetGroupArn: !Ref ElbTargetGroupHTTPS
-      LoadBalancerArn: !Ref Elb
-      Port: 443
-      Protocol: HTTPS
-
-  ElbListenerTSM:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    DependsOn: 
-    - ElbTargetGroupTSM
-    - Elb
-    Properties:
-      Certificates: 
-        - CertificateArn: !GetAtt ConfigureSSLStack.Outputs.ACMCertificate
-      DefaultActions:
-      - Type: forward
-        TargetGroupArn: !Ref ElbTargetGroupTSM
-      LoadBalancerArn: !Ref Elb
-      Port: 8850
-      Protocol: HTTPS
-
-  ElbTargetGroupHTTPS:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      HealthCheckIntervalSeconds: 30
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 3
-      UnhealthyThresholdCount: 5
-      Port: 443
-      Protocol: HTTPS
-      VpcId: !Ref VpcId
-
-  ElbTargetGroupTSM:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      HealthCheckIntervalSeconds: 30
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 3
-      UnhealthyThresholdCount: 5
-      Port: 8850
-      Protocol: HTTPS
-      VpcId: !Ref VpcId
-
-  RecordAlias:
-    Type: AWS::Route53::RecordSet
-    DependsOn:
-    - Elb
-    Properties:
-      AliasTarget:
-        DNSName: !GetAtt Elb.DNSName
-        HostedZoneId: !GetAtt Elb.CanonicalHostedZoneID
-      HostedZoneId: !Ref AWSHostedZoneID
-      Name: !Ref AWSPublicFQDN
-      Type: A
+        SourceCIDR: !Ref SourceCIDR
+        VpcCidr: !Ref VpcCidr
+        VpcId: !Ref VpcId
 
   # Configure Instance Security Group
   InstanceSecurityGroup:
@@ -436,11 +351,11 @@ Resources:
       - IpProtocol: tcp
         FromPort: 8850
         ToPort: 8850
-        SourceSecurityGroupId: !Ref ElbSecurityGroup
+        SourceSecurityGroupId: !GetAtt ElbStack.Outputs.ElbSecurityGroup
       - IpProtocol: tcp
         FromPort: 443
         ToPort: 443
-        SourceSecurityGroupId: !Ref ElbSecurityGroup
+        SourceSecurityGroupId: !GetAtt ElbStack.Outputs.ElbSecurityGroup
       VpcId: !Ref VpcId
 
   TableauServerWindows:
@@ -448,10 +363,10 @@ Resources:
     Condition: IsWindows
     DependsOn: EncryptAmiStack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-single-server-windows.yaml
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-windows.yaml
       Parameters:
         AcceptEULA: !Ref AcceptEULA
-        ElbTargetGroups: !Sub "${ElbTargetGroupHTTPS},${ElbTargetGroupTSM}"
+        ElbTargetGroups: !GetAtt ElbStack.Outputs.ElbTargetGroupHTTPS
         ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
         InstanceSecurityGroup: !Ref InstanceSecurityGroup
         InstanceType: !Ref InstanceType
@@ -477,4 +392,7 @@ Resources:
  
 Outputs:
   ElbDns:
-    Value: !GetAtt Elb.DNSName
+    Value: !GetAtt ElbStack.Outputs.ElbDns
+  RecordSet: 
+    Value: !Ref RecordAlias
+    Description: Domain Name of the Record Set

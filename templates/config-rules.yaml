@@ -5,7 +5,6 @@ Parameters:
   LogBucketName:
     Type: String
     Description: Log bucket
-  
 
 Resources:
   # ConfigRole
@@ -80,7 +79,7 @@ Resources:
     Type: AWS::Config::DeliveryChannel
     Condition: NoConfigDeliveryChannel
     Properties:
-      S3BucketName: !Ref ConfigBucket
+      S3BucketName: !Ref LogBucketName
       S3KeyPrefix: "config"
 
   #IAM Configuration Change Detected
@@ -96,6 +95,100 @@ Resources:
       Owner: AWS
       SourceIdentifier: CLOUD_TRAIL_ENABLED
   #Config change detected
+
+  TriggerConfigRecorderEnabled:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaConfigRecorderEnabled
+      Principal: config.amazonaws.com
+  RuleConfigRecorderEnabled:
+    Type: AWS::Config::ConfigRule
+    DependsOn: ConfigRecorder
+    Properties:
+      ConfigRuleName: ConfigRecorderEnabled
+      Description: Checks if AWS Config recorder is turned on
+      InputParameters:
+        s3BucketName: !Ref LogBucketName
+      Source:
+        Owner: CUSTOM_LAMBDA
+        SourceIdentifier: !Ref LambdaConfigRecorderEnabled
+        SourceDetails:
+        - EventSource: aws.config
+          MaximumExecutionFrequency: One_Hour
+          MessageType: ScheduledNotification
+  LambdaConfigRecorderEnabled:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Checks if Config Recorder is enabled
+      Handler: index.handler
+      Runtime: python3.6
+      Role: !GetAtt LambdaConfigRecorderRole
+      Timeout: 30
+      Code:
+        ZipFile: | 
+          import boto3
+          import json
+          from datetime import datetime
+          config = boto3.client('config')
+          def evaluate_compliance(rule_parameters):
+              # First check configuration recorder is created
+              config_recorder_response = config.describe_configuration_recorder_status()
+              if 'ConfigurationRecordersStatus' not in config_recorder_response or \
+                              len(config_recorder_response['ConfigurationRecordersStatus']) < 1:
+                  return {
+                      'compliance_type': 'NON_COMPLIANT',
+                      'annotation': 'Cannot find config recorder status'
+                  }
+              for config_recorder in config_recorder_response['ConfigurationRecordersStatus']:
+                  if not config_recorder['recording']:
+                      return {
+                          'compliance_type': 'NON_COMPLIANT',
+                          'annotation': 'Config recorder is not recording'
+                      }
+              # Check that there are delivery channels and that they're mapping to the appropriate buckets
+              delivery_channels_response = config.describe_delivery_channels()
+              if 'DeliveryChannels' not in delivery_channels_response or len(delivery_channels_response['DeliveryChannels']) < 1:
+                  return {
+                      'compliance_type': 'NON_COMPLIANT',
+                      'annotation': 'No delivery channel for config recorder'
+                  }
+              if 's3BucketName' in rule_parameters:
+                  for channel in delivery_channels_response['DeliveryChannels']:
+                      if channel['s3BucketName'] != rule_parameters['s3BucketName']:
+                          return {
+                              'compliance_type': 'NON_COMPLIANT',
+                              'annotation': 'Config recorder writing to incorrect bucket'
+                          }
+              if 'snsTopicARN' in rule_parameters:
+                  for channel in delivery_channels_response['DeliveryChannels']:
+                      if channel['snsTopicARN'] != rule_parameters['snsTopicARN']:
+                          return {
+                              'compliance_type': 'NON_COMPLIANT',
+                              'annotation': 'Config recording writing to incorrect SNS topic'
+                          }
+              return {
+                  'compliance_type': 'COMPLIANT',
+                  'annotation': 'Config recorder enabled with appropriate delivery channel'
+              }
+          def handler(event, context):
+              today = datetime.today()
+              rule_parameters = json.loads(event['ruleParameters'])
+              evaluation = evaluate_compliance(rule_parameters)
+              result_token = event['resultToken'] if 'resultToken' in event else 'No token found'
+              config.put_evaluations(
+                  Evaluations=[
+                      {
+                          'ComplianceResourceType': 'AWS::::Account',
+                          'ComplianceResourceId': event['accountId'],
+                          'ComplianceType': evaluation['compliance_type'],
+                          'Annotation': evaluation['annotation'],
+                          'OrderingTimestamp': datetime(today.year, today.month, today.day, today.hour)
+                      }
+                  ],
+                  ResultToken=result_token
+              )
+          
   #ELB Config change detected
   ALBEncryption:
     Type: AWS::Config::ConfigRule
