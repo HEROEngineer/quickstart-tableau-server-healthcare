@@ -394,5 +394,5 @@ Outputs:
   ElbDns:
     Value: !GetAtt ElbStack.Outputs.ElbDns
   RecordSet: 
-    Value: !Ref RecordAlias
+    Value: !GetAtt ElbStack.Outputs.RecordSet
     Description: Domain Name of the Record Set

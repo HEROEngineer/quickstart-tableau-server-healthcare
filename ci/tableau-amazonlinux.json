@@ -1,7 +1,7 @@
 [
     {
         "ParameterKey": "AMIOS",
-        "ParameterValue": "Windows-Server-2012-R2"
+        "ParameterValue": "Amazon-Linux-2"
     },
     {
         "ParameterKey": "AWSHostedZoneID",
@@ -9,7 +9,7 @@
     },
     {
         "ParameterKey": "AWSPublicFQDN",
-        "ParameterValue": "tableau-windows.ajfriedm.andglenn.lab.myinstance.com"
+        "ParameterValue": "ajfriedm.andglenn.lab.myinstance.com"
     },
     {
         "ParameterKey": "AcceptEULA",
