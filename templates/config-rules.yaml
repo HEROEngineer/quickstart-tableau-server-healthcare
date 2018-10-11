@@ -68,7 +68,7 @@ Resources:
 
   ConfigRecorder:
     Type: AWS::Config::ConfigurationRecorder
-    Condition: NoConfigRecorder
+  #  Condition: NoConfigRecorder
     Properties:
       RecordingGroup:
         AllSupported: true
@@ -77,13 +77,12 @@ Resources:
   
   ConfigDeliveryChannel:
     Type: AWS::Config::DeliveryChannel
-    Condition: NoConfigDeliveryChannel
+  #  Condition: NoConfigDeliveryChannel
     Properties:
       S3BucketName: !Ref LogBucketName
       S3KeyPrefix: "config"
 
   #IAM Configuration Change Detected
-  #IAM access key created
   #CloudTrail log config change detected
   CloudTrailEnabled:
     Description: Checks whether AWS CloudTrail is enabled in your AWS account
