@@ -437,6 +437,7 @@ Resources:
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-centos-amazonlinux.yaml
       Parameters:
+        AMIOS: !Ref AMIOS
         AcceptEULA: !Ref AcceptEULA
         ElbTargetGroups: !GetAtt ElbStack.Outputs.ElbTargetGroupHTTPS
         ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId

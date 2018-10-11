@@ -2,6 +2,14 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'AWS CloudFormation Template: Tableau Server running on Linux (Centos and Amazon Linux).'
 
 Parameters:
+  AMIOS:
+    AllowedValues:
+      - Amazon-Linux-2
+      - CentOS-7-HVM
+      - Ubuntu-Server-16.04-LTS-HVM
+      - Windows-Server-2012-R2
+    Description: The Linux or Windows distribution for the AMI to be used for the EC2 instances
+    Type: String
   AcceptEULA:
     AllowedPattern: 'Yes'
     AllowedValues:
@@ -110,6 +118,7 @@ Mappings:
       SystemVolumeSize: 100
 Conditions:
   IsTrial: !Equals [ '', !Ref TableauServerLicenseKey ]
+  IsAmazonLinux: !Equals [ 'Amazon-Linux-2', !Ref AMIOS ]
   
 Resources:
   TableauASG:
@@ -189,7 +198,7 @@ Resources:
     Properties:
       AssociatePublicIpAddress: false
       BlockDeviceMappings:
-        - DeviceName: /dev/xvda
+        - DeviceName: !If [ IsAmazonLinux, /dev/xvda, /dev/sda1 ]
           Ebs:
             VolumeType: gp2
             VolumeSize: !FindInMap [ DefaultConfiguration, MachineConfiguration, SystemVolumeSize ]
@@ -208,7 +217,8 @@ Resources:
             yum -y update
 
             # Call Init
-            #/usr/bin/easy_install --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+            ${CfnInitInstall}
+            
             /opt/aws/bin/cfn-init --stack '${AWS::StackName}' --resource TableauLaunchConfig --region '${AWS::Region}' >> /tmp/cfn-init.log 2>&1
             
             # Machine Configs
@@ -269,6 +279,7 @@ Resources:
             #rm -f /tmp/tableau-server.deb
             #rm -f /tmp/automated-installer
           - Trial: !If [ IsTrial, '', !Sub ' -k ${TableauServerLicenseKey} ']
+            CfnInitInstall: !If [ IsAmazonLinux, '', '/usr/bin/easy_install --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz' ]
 
 Outputs:
   TableauASG: 

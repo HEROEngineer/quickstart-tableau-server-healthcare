@@ -1,0 +1,114 @@
+[
+    {
+        "ParameterKey": "AMIOS",
+        "ParameterValue": "CentOS-7-HVM"
+    },
+    {
+        "ParameterKey": "AWSHostedZoneID",
+        "ParameterValue": "Z20J45NCQ1BKQT"
+    },
+    {
+        "ParameterKey": "AWSPublicFQDN",
+        "ParameterValue": "tableau-centos.ajfriedm.andglenn.lab.myinstance.com"
+    },
+    {
+        "ParameterKey": "AcceptEULA",
+        "ParameterValue": "Yes"
+    },
+    {
+        "ParameterKey": "AvailabilityZones",
+        "ParameterValue": "$[taskcat_genaz_2]"
+    },
+    {
+        "ParameterKey": "InstanceType",
+        "ParameterValue": "m5.4xlarge"
+    },
+    {
+        "ParameterKey": "KeyPairName",
+        "ParameterValue": "$[taskcat_getkeypair]"
+    },
+    {
+        "ParameterKey": "Password",
+        "ParameterValue": "F0cz2o9fe6!"
+    },
+    {
+        "ParameterKey": "Username",
+        "ParameterValue": "test"
+    },
+    {
+        "ParameterKey": "QSS3BucketName",
+        "ParameterValue": "$[taskcat_autobucket]"
+    },
+    {
+        "ParameterKey": "QSS3KeyPrefix",
+        "ParameterValue": "quickstart-tableau-server-healthcare/"
+    },
+    {
+        "ParameterKey": "RegCity",
+        "ParameterValue": "Seattle"
+    },
+    {
+        "ParameterKey": "RegCompany",
+        "ParameterValue": "MyCompany"
+    },
+    {
+        "ParameterKey": "RegCountry",
+        "ParameterValue": "USA"
+    },
+    {
+        "ParameterKey": "RegDepartment",
+        "ParameterValue": "Solutions"
+    },
+    {
+        "ParameterKey": "RegEmail",
+        "ParameterValue": "test@example.com"
+    },
+    {
+        "ParameterKey": "RegIndustry",
+        "ParameterValue": "Healthcare"
+    },
+    {
+        "ParameterKey": "RegLastName",
+        "ParameterValue": "Smith"
+    },
+    {
+        "ParameterKey": "RegFirstName",
+        "ParameterValue": "John"
+    },
+    {
+        "ParameterKey": "RegPhone",
+        "ParameterValue": "888-888-8888"
+    },
+    {
+        "ParameterKey": "RegState",
+        "ParameterValue": "WA"
+    },
+    {
+        "ParameterKey": "RegTitle",
+        "ParameterValue": "Director"
+    },
+    {
+        "ParameterKey": "RegZip",
+        "ParameterValue": "98101"
+    },
+    {
+        "ParameterKey": "SourceCIDR",
+        "ParameterValue": "0.0.0.0/0"
+    },
+    {
+        "ParameterKey": "TableauServerAdminUser",
+        "ParameterValue": "test"
+    },
+    {
+        "ParameterKey": "TableauServerAdminPassword",
+        "ParameterValue": "test1234"
+    },
+    {
+        "ParameterKey": "TableauServerLicenseKey",
+        "ParameterValue": ""
+    },
+    {
+        "ParameterKey": "BastionAdminCIDR",
+        "ParameterValue": "0.0.0.0/0"
+    }
+]
