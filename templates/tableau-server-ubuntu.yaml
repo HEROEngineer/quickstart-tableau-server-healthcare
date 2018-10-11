@@ -1,4 +1,3 @@
----
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'AWS CloudFormation Template: Tableau Server running on Linux (Ubuntu).'
 
@@ -105,7 +104,7 @@ Parameters:
 Mappings:
   DefaultConfiguration:
     InstallationConfig:
-      TableauServerInstaller: https://s3-us-west-2.amazonaws.com/testingtsmtableau/tableau-server-2018-2-0_amd64.deb
+      TableauServerInstaller: https://s3-us-west-2.amazonaws.com/testingtsmtableau/tableau-server-2018-2-2_amd64.deb
       AutomatedInstaller: https://s3-us-west-2.amazonaws.com/testingtsmtableau/automated-installer.sh
     MachineConfiguration:
       SystemVolumeSize: 100
@@ -148,24 +147,23 @@ Resources:
                 tableau_server_admin_user='${TableauServerAdminUser}'
                 tableau_server_admin_pass='${TableauServerAdminPassword}'
             "/tmp/config.json":
-              content:
-                content: 
-                  {
-                    "configEntities": {
-                      "gatewaySettings": {
-                        "_type": "gatewaySettingsType",
-                        "port": 443,
-                        "firewallOpeningEnabled": true,
-                        "sslRedirectEnabled": true,
-                        "publicHost": "localhost",
-                        "publicPort": 443
-                      },
-                      "identityStore": {
-                        "_type": "identityStoreType",
-                        "type": "local"
-                      }
+              content: 
+                {
+                  "configEntities": {
+                    "gatewaySettings": {
+                      "_type": "gatewaySettingsType",
+                      "port": 80,
+                      "firewallOpeningEnabled": true,
+                      "sslRedirectEnabled": true,
+                      "publicHost": "localhost",
+                      "publicPort": 443
+                    },
+                    "identityStore": {
+                      "_type": "identityStoreType",
+                      "type": "local"
                     }
                   }
+                }
             "/tmp/tableau-server.deb":
               source: !FindInMap [ DefaultConfiguration, InstallationConfig, TableauServerInstaller ]
             "/tmp/automated-installer":
@@ -201,24 +199,26 @@ Resources:
       - !Ref InstanceSecurityGroup
       EbsOptimized: true
       UserData:
-        Fn::Base64: 
-          - !Sub |
+        Fn::Base64: !Sub
+          - |
             #!/bin/bash -x
+            set -e
+
             apt-get update && apt-get install -y python-setuptools && apt-get clean
 
             # Call Init
             /usr/bin/easy_install --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
-            /opt/aws/bin/cfn-init --stack '${AWS::StackName}' --resource TableauServer --region '${AWS::Region}'
+            /opt/aws/bin/cfn-init --stack '${AWS::StackName}' --resource TableauLaunchConfig --region '${AWS::Region}'
 
             # Machine Configs
             hostnamectl set-hostname $(hostnamectl --static)
             setup_sftp() {
-              source 'tmp/secrets.properties'
+              source '/tmp/secrets.properties'
               useradd -m "$tsm_admin_user"
               echo -e "$tsm_admin_pass\n$tsm_admin_pass" | passwd "$tsm_admin_user" 
             }
 
-            setup_sftp
+            setup_sftp >> /tmp/setup_sftp.log 2>&1
             unset -f setup_sftp
             export LANG=en_US.UTF-8
 
@@ -228,7 +228,7 @@ Resources:
               /tmp/automated-installer -a $tsm_admin_user -f /tmp/config.json -r /tmp/registration.json -s /tmp/secrets.properties ${Trial} -v --accepteula --force /tmp/tableau-server.deb
             }
 
-            install
+            install >> /tmp/install.log 2>&1
             unset -f install
 
             # SSL Cert
@@ -236,24 +236,30 @@ Resources:
             cd /opt/tableau/tableau_server/packages/
             TABLEAUVERSION=`ls -1 | head -1 | awk 'BEGIN{FS="."}{for (i=2; i<NF; i++) printf $i "."; printf $NF}'`
 
-            TSMPATH=/opt/tableau/tableau_server/packages/bin.${TABLEAUVERSION}/tsm
-            SSLFOLDER=/opt/tableau/tableau_server/data/ssl
-            mkdir ${SSLFOLDER}
-            OPENSSL=/opt/tableau/tableau_server/packages/apache.${TABLEAUVERSION}/bin/openssl
+            TSMPATH=/opt/tableau/tableau_server/packages/bin.$TABLEAUVERSION/tsm
+            SSLFOLDER=/var/opt/tableau/tableau_server/data/ssl
+            mkdir $SSLFOLDER
+            OPENSSL=/opt/tableau/tableau_server/packages/apache.$TABLEAUVERSION/bin/openssl
 
             # Create and sign certificate
-            cd ${SSLFOLDER}
+            cd $SSLFOLDER
             CERTNAME=tableau-quickstart
-            ${OPENSSL} genrsa -out ${CERTNAME}.key 4096
-            ${OPENSSL} req -new -key ${CERTNAME}.key -out ${CERTNAME}.csr -subj "/C=US/ST=Washington/L=Seattle/O=MyOrg/OU=MyDept/CN=example.com" -config /opt/tableau/tableau_server/packages/apache.${TABLEAUVERSION}/conf/openssl.cnf
-            ${OPENSSL} x509 -req -days 365 -in ${CERTNAME}.csr -signkey ${CERTNAME}.key -out ${CERTNAME}.crt
+            $OPENSSL genrsa -out $CERTNAME.key 4096
+            $OPENSSL req -new -key $CERTNAME.key -out $CERTNAME.csr -subj "/C=US/ST=Washington/L=Seattle/O=MyOrg/OU=MyDept/CN=example.com" -config /opt/tableau/tableau_server/packages/apache.$TABLEAUVERSION/conf/openssl.cnf
+            $OPENSSL x509 -req -days 365 -in $CERTNAME.csr -signkey $CERTNAME.key -out $CERTNAME.crt
 
             # Update TSM
-            ${TSMPATH} security external-ssl enable --cert-file ${SSLFOLDER}/${CERTNAME}.crt --key-file ${SSLFOLDER}/{CERTNAME}.key
-            ${TSMPATH} pending-changes apply
+            tsm_update() {
+              source '/tmp/secrets.properties'
+              $TSMPATH security external-ssl enable --cert-file $SSLFOLDER/$CERTNAME.crt --key-file $SSLFOLDER/$CERTNAME.key -u $tsm_admin_user -p $tsm_admin_pass
+              $TSMPATH pending-changes apply --ignore-prompt -u $tsm_admin_user -p $tsm_admin_pass
+            }
+
+            tsm_update >> /tmp/tsm_update.log 2>&1
+            unset -f tsm_update
 
             # Signal successful completion
-            /opt/aws/bin/cfn-signal -e $? --stack '${AWS::StackName}' --resource TableauServer --region '${AWS::Region}'
+            /opt/aws/bin/cfn-signal -e $? --stack '${AWS::StackName}' --resource TableauASG --region '${AWS::Region}'
 
             # Cleanup
             rm -f /tmp/config.json
@@ -262,9 +268,6 @@ Resources:
             rm -f /tmp/tableau-server.deb
             rm -f /tmp/automated-installer
           - Trial: !If [ IsTrial, '', !Sub ' -k ${TableauServerLicenseKey} ']
-      Tags:
-      - Key: Name
-        Value: !Sub "${AWS::StackName}-cfn-tableau-server-linux"
 
 Outputs:
   TableauASG: 

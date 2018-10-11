@@ -302,6 +302,8 @@ Mappings:
 Conditions:
   IsWindows: !Equals [ !Ref AMIOS, Windows-Server-2012-R2 ]
   IsLinux: !Not [ Condition: IsWindows ]
+  IsUbuntu: !Equals [ !Ref AMIOS,  Ubuntu-Server-16.04-LTS-HVM ]
+  IsCentosOrAmazonLinux: !Or [ !Equals [ !Ref AMIOS,  CentOS-7-HVM ], !Equals [ !Ref AMIOS, Amazon-Linux-2 ] ]
 
 Resources:
   # Create a log bucket
@@ -361,7 +363,9 @@ Resources:
   TableauServerWindows:
     Type: AWS::CloudFormation::Stack
     Condition: IsWindows
-    DependsOn: EncryptAmiStack
+    DependsOn: 
+    - EncryptAmiStack
+    - ElbStack
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-windows.yaml
       Parameters:
@@ -373,6 +377,74 @@ Resources:
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
         PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds]
+        RegCity: !Ref RegCity
+        RegCompany: !Ref RegCompany
+        RegCountry: !Ref RegCountry
+        RegDepartment: !Ref RegDepartment
+        RegEmail: !Ref RegEmail
+        RegFirstName: !Ref RegFirstName
+        RegIndustry: !Ref RegIndustry
+        RegLastName: !Ref RegLastName
+        RegPhone: !Ref RegPhone
+        RegState: !Ref RegState
+        RegTitle: !Ref RegTitle
+        RegZip: !Ref RegZip
+        TableauServerAdminUser: !Ref TableauServerAdminUser
+        TableauServerAdminPassword: !Ref TableauServerAdminPassword
+        TableauServerLicenseKey: !Ref TableauServerLicenseKey
+        Username: !Ref Username
+
+  TableauServerUbuntu:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsUbuntu
+    DependsOn: 
+    - EncryptAmiStack
+    - ElbStack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-ubuntu.yaml
+      Parameters:
+        AcceptEULA: !Ref AcceptEULA
+        ElbTargetGroups: !GetAtt ElbStack.Outputs.ElbTargetGroupHTTPS
+        ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
+        InstanceSecurityGroup: !Ref InstanceSecurityGroup
+        InstanceType: !Ref InstanceType
+        KeyPairName: !Ref KeyPairName
+        Password: !Ref Password
+        PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds ]
+        RegCity: !Ref RegCity
+        RegCompany: !Ref RegCompany
+        RegCountry: !Ref RegCountry
+        RegDepartment: !Ref RegDepartment
+        RegEmail: !Ref RegEmail
+        RegFirstName: !Ref RegFirstName
+        RegIndustry: !Ref RegIndustry
+        RegLastName: !Ref RegLastName
+        RegPhone: !Ref RegPhone
+        RegState: !Ref RegState
+        RegTitle: !Ref RegTitle
+        RegZip: !Ref RegZip
+        TableauServerAdminUser: !Ref TableauServerAdminUser
+        TableauServerAdminPassword: !Ref TableauServerAdminPassword
+        TableauServerLicenseKey: !Ref TableauServerLicenseKey
+        Username: !Ref Username
+
+  TableauServerCentosAmazonLinux:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsCentosOrAmazonLinux
+    DependsOn: 
+    - EncryptAmiStack
+    - ElbStack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-centos-amazonlinux.yaml
+      Parameters:
+        AcceptEULA: !Ref AcceptEULA
+        ElbTargetGroups: !GetAtt ElbStack.Outputs.ElbTargetGroupHTTPS
+        ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
+        InstanceSecurityGroup: !Ref InstanceSecurityGroup
+        InstanceType: !Ref InstanceType
+        KeyPairName: !Ref KeyPairName
+        Password: !Ref Password
+        PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds ]
         RegCity: !Ref RegCity
         RegCompany: !Ref RegCompany
         RegCountry: !Ref RegCountry

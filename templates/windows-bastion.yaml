@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: Bastion host, useful to access private instances created inside a VPC
+AWSTemplateFormatVersion: 2010-09-09
+Description: Windows bastion host, useful to access private instances created inside a VPC
 Parameters:
   InstanceType:
     Default: t2.micro
@@ -18,7 +18,6 @@ Parameters:
   SubnetId:
     Description: The Id of the subnet for the bastion host
     Type: AWS::EC2::Subnet::Id
-    MinLength: '1'
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
@@ -36,6 +35,11 @@ Metadata:
       Parameters:
       - InstanceType
       - KeyPairName
+    - Label:
+        default: AWS Quick Start Configuration
+      Parameters:
+      - QSS3BucketName
+      - QSS3KeyPrefix
     ParameterLabels:
       InstanceType:
         default: The instance type for the bastion
@@ -47,38 +51,47 @@ Metadata:
         default: The subnet on which to place the bastion
       VPCID:
         default: The VPC id in which to create the bastion
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
 Mappings:
   AWSAMIRegionMap:
     AMI:
-      WS2012R2: Windows_Server-2012-R2_RTM-English-64Bit-Base-2018.05.09
+      WS2012R2: Windows_Server-2012-R2_RTM-English-64Bit-Base-2018.09.15
     ap-northeast-1:
-      WS2012R2: ami-9be803e4
+      WS2012R2: ami-0f94c740726599c3a
     ap-northeast-2:
-      WS2012R2: ami-4a1eb724
+      WS2012R2: ami-0f033ac3427fcdad0
     ap-south-1:
-      WS2012R2: ami-2289aa4d
+      WS2012R2: ami-0d5f824867e8aeaf6
     ap-southeast-1:
-      WS2012R2: ami-14a89d68
+      WS2012R2: ami-0f42104b50a572747
     ap-southeast-2:
-      WS2012R2: ami-c971a6ab
+      WS2012R2: ami-06f2dbd8cdf99fd40
     ca-central-1:
-      WS2012R2: ami-4a97172e
+      WS2012R2: ami-0bc1f82c15f6cb011
     eu-central-1:
-      WS2012R2: ami-3c0f22d7
+      WS2012R2: ami-09f85c4c3e4a1ca3b
     eu-west-1:
-      WS2012R2: ami-4390a43a
+      WS2012R2: ami-019526e560b1c9df4
     eu-west-2:
-      WS2012R2: ami-e940a28e
+      WS2012R2: ami-068ee8cde1f60ca7f
+    eu-west-3:
+      WS2012R2: ami-014aa0eab0ec618d6
     sa-east-1:
-      WS2012R2: ami-b9df82d5
+      WS2012R2: ami-04fddd42220f1829a
     us-east-1:
-      WS2012R2: ami-2a9a1655
+      WS2012R2: ami-04b06bdb58cae787d
     us-east-2:
-      WS2012R2: ami-ee112c8b
+      WS2012R2: ami-08c59800a21429561
     us-west-1:
-      WS2012R2: ami-63253b03
+      WS2012R2: ami-08f6003bf4d50fe60
     us-west-2:
-      WS2012R2: ami-bbd6a7c3
+      WS2012R2: ami-0d1a1bbc1331e97f7
+  AWSAMINameMap:
+    Amazon-Linux-2:
+      Code: ALINUX2
 Resources:
   BastionSecurityGroup:
     Type: AWS::EC2::SecurityGroup

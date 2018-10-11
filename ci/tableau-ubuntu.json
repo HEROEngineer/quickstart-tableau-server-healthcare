@@ -1,7 +1,7 @@
 [
     {
         "ParameterKey": "AMIOS",
-        "ParameterValue": "Amazon-Linux-2"
+        "ParameterValue": "Ubuntu-Server-16.04-LTS-HVM"
     },
     {
         "ParameterKey": "AWSHostedZoneID",
@@ -9,7 +9,7 @@
     },
     {
         "ParameterKey": "AWSPublicFQDN",
-        "ParameterValue": "tableau-amazonlinux.ajfriedm.andglenn.lab.myinstance.com"
+        "ParameterValue": "tableau-ubuntu.ajfriedm.andglenn.lab.myinstance.com"
     },
     {
         "ParameterKey": "AcceptEULA",
@@ -21,7 +21,7 @@
     },
     {
         "ParameterKey": "InstanceType",
-        "ParameterValue": "c4.4xlarge"
+        "ParameterValue": "m5.4xlarge"
     },
     {
         "ParameterKey": "KeyPairName",
