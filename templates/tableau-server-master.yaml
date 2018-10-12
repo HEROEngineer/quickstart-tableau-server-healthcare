@@ -1,5 +1,4 @@
 # - master
-#   - configure ssl
 #   - bastion
 #     - bastion windows
 #     - bastion linux
@@ -7,14 +6,17 @@
 #     - config rules
 #   - tableau
 #     - encrypt ami
+#     - encrypted elb
+#       - copy lambda
+#       - configure ssl
+#       - acm/route53
 #     - tableau windows
 #     - tableau centos7
 #     - tableau ubuntu
 #     - tableau linux
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'AWS CloudFormation Template: Tableau Server Cluster with three nodes
-  running on either Linux (CentOS/Ubuntu) or Windows.'
+Description: Tableau Server Single Node (Windows, Ubuntu, Amazon Linux 2, CentOS) configured for healthcare
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -26,6 +28,7 @@ Metadata:
       - KeyPairName
       - AMIOS
       - SourceCIDR
+      - BastionAdminCIDR
     - Label:
         default: Server DNS configuration
       Parameters:
@@ -71,6 +74,8 @@ Metadata:
         default: Accept Tableau End User License Agreement
       AvailabilityZones:
         default: Availability Zones
+      BastionAdminCIDR:
+        default: CIDR for Bastion Host Access
       InstanceType:
         default: Amazon EC2 instance type
       KeyPairName:
@@ -257,10 +262,22 @@ Parameters:
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
     Description: The CIDR address from which you will remote into the instance
     Type: String
+  WindowsBastionPwd:
+    Description: Password for the administrative account. Must be at least 8 characters containing letters, numbers and symbols. If using Windows, min length should be 8.
+    Type: String
+    Default: ""
+    MaxLength: 32
+    NoEcho: true
+  WindowsBastionAdmin:
+    Description: User name for the new local administrator account. If you are using Windows, min length should be 5.
+    Type: String
+    Default: ""
+    MaxLength: 25
+    
 Mappings:
   DefaultConfiguration:
     MachineConfiguration:
-      BastionInstanceType: t2.micro
+      BastionInstanceType: t2.large
     NetworkConfiguration:
       VPCCIDR: 10.0.0.0/16
       PublicSubnet1CIDR: 10.0.1.0/24
@@ -301,6 +318,8 @@ Resources:
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         VPCID: !GetAtt VPCStack.Outputs.VPCID
+        WindowsBastionAdmin: !If [ IsWindows, !Ref WindowsBastionAdmin, "" ]
+        WindowsBastionPwd: !If [ IsWindows, !Ref WindowsBastionPwd, "" ]
         WindowsOrLinux: !If [ IsWindows, windows, linux ]
 
   TableauStack:

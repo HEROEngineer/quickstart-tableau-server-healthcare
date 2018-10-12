@@ -34,10 +34,6 @@ Metadata:
 Parameters:
   BastionInstanceType:
     AllowedValues:
-    - t2.nano
-    - t2.micro
-    - t2.small
-    - t2.medium
     - t2.large
     - m3.large
     - m3.xlarge
@@ -46,7 +42,7 @@ Parameters:
     - m4.xlarge
     - m4.2xlarge
     - m4.4xlarge
-    Default: t2.micro
+    Default: t2.large
     Description: Amazon EC2 instance type for the bastion instances
     Type: String
   KeyPairName:
@@ -87,6 +83,18 @@ Parameters:
   VPCID:
     Description: ID of the VPC (e.g., vpc-0343606e)
     Type: AWS::EC2::VPC::Id
+  WindowsBastionPwd:
+    Description: Password for the administrative account. Must be at least 8 characters containing letters, numbers and symbols. If using Windows, min length should be 8.
+    Type: String
+    Default: ""
+    MaxLength: 32
+    NoEcho: true
+  WindowsBastionAdmin:
+    Description: User name for the new local administrator account. If you are using Windows, min length should be 5.
+    Type: String
+    Default: ""
+    MaxLength: 25
+    AllowedPattern: "[a-zA-Z0-9]*"
   WindowsOrLinux:
     AllowedValues:
     - linux
@@ -103,13 +111,17 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: IsWindows
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/windows-bastion.yaml
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/templates/rdgw-standalone.template
       Parameters:
-        InstanceType: !Ref BastionInstanceType
+        AdminUser: !Ref WindowsBastionAdmin
+        AdminPassword: !Ref WindowsBastionPwd
         KeyPairName: !Ref KeyPairName
-        SourceCIDR: !Ref RemoteAccessCIDR
-        SubnetId: !Ref PublicSubnet1ID
+        PublicSubnet1ID: !Ref PublicSubnet1ID
+        PublicSubnet2ID: !Ref PublicSubnet2ID
+        RDGWCIDR: !Ref RemoteAccessCIDR
+        RDGWInstanceType: !Ref BastionInstanceType
         VPCID: !Ref VPCID
+
   BastionHostLinux:
     Type: AWS::CloudFormation::Stack
     Condition: IsLinux
@@ -125,8 +137,8 @@ Resources:
 
 Outputs:
   BastionSecurityGroupID:
-    Value: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.SecurityGroup, !GetAtt BastionHostLinux.Outputs.BastionSecurityGroupID ]
+    Value: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.RemoteDesktopGatewaySGID, !GetAtt BastionHostLinux.Outputs.BastionSecurityGroupID ]
     Description: Bastion Host Security Group ID 
   BastionPublicIp:
-    Value: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.BastionIP, !GetAtt BastionHostLinux.Outputs.EIP1 ]
+    Value: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.EIP1, !GetAtt BastionHostLinux.Outputs.EIP1 ]
 

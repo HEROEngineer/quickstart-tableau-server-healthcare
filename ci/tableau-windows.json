@@ -16,6 +16,14 @@
         "ParameterValue": "Yes"
     },
     {
+        "ParameterKey": "WindowsBastionAdmin",
+        "ParameterValue": "StackAdmin"
+    },
+    {
+        "ParameterKey": "WindowsBastionPwd",
+        "ParameterValue": "$[taskcat_genpass_16]"
+    },
+    {
         "ParameterKey": "AvailabilityZones",
         "ParameterValue": "$[taskcat_genaz_2]"
     },
