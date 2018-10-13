@@ -313,16 +313,6 @@ Resources:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
   #    Parameters:
 
-  # Encrypt the AMI root volume
-  EncryptAmiStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/encrypt-ami.yaml
-      Parameters:
-        AmiId: !FindInMap [ AWSAMIRegionMap , !Ref "AWS::Region", !FindInMap [ AWSAMINameMap, !Ref AMIOS, Code ] ]
-        AmiRegion: !Ref "AWS::Region"
-        SubnetId: !Select [ 0, !Ref PrivateSubnetIds ]
-
   # Create the ELB
   ElbStack:
     Type: AWS::CloudFormation::Stack
@@ -339,6 +329,19 @@ Resources:
         SourceCIDR: !Ref SourceCIDR
         VpcCidr: !Ref VpcCidr
         VpcId: !Ref VpcId
+
+  # Encrypt the AMI root volume
+  EncryptAmiStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - ElbStack
+    - LogStack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/encrypt-ami.yaml
+      Parameters:
+        AmiId: !FindInMap [ AWSAMIRegionMap , !Ref "AWS::Region", !FindInMap [ AWSAMINameMap, !Ref AMIOS, Code ] ]
+        AmiRegion: !Ref "AWS::Region"
+        SubnetId: !Select [ 0, !Ref PrivateSubnetIds ]
 
   # Configure Instance Security Group
   InstanceSecurityGroup:
