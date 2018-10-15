@@ -2,7 +2,56 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: "AWS CloudFormation Template: Deploys infrastructure for Tableau Server"
 Metadata:
   AWS::CloudFormation::Interface:
-    ParamaterLabels:
+    ParameterGroups:
+      - Label:
+          default: AWS Environment and Machine Configuration
+        Parameters:
+        - AMIOS
+        - BastionSecurityGroup
+        - InstanceType
+        - KeyPairName
+        - PublicSubnetIds
+        - PrivateSubnetIds
+        - SourceCIDR
+        - VpcCidr
+        - VpcId
+      - Label:
+          default: Server DNS configuration
+        Parameters:
+        - AWSHostedZoneID
+        - AWSPublicFQDN
+      - Label:
+          default: Secrets
+        Parameters:
+        - Username
+        - Password
+        - TableauServerAdminUser
+        - TableauServerAdminPassword
+      - Label:
+          default: Registration
+        Parameters:
+        - AcceptEULA
+        - TableauServerLicenseKey
+        - RegFirstName
+        - RegLastName
+        - RegEmail
+        - RegCompany
+        - RegTitle
+        - RegDepartment
+        - RegIndustry
+        - RegPhone
+        - RegCity
+        - RegState
+        - RegZip
+        - RegCountry
+      - Label:
+          default: AWS Quick Start Configuration
+        Parameters:
+        - QSS3BucketName
+        - QSS3KeyPrefix
+        - QSTagKey
+        - QSTagValue
+    ParameterLabels:
       AMIOS:
         default: AMI Operating System
       AWSHostedZoneID:
@@ -11,12 +60,18 @@ Metadata:
         default: Full DNS Name for Cluster
       AcceptEULA:
         default: Accept Tableau End User License Agreement
+      BastionSecurityGroup:
+        default: Bastion Host Security Group ID
       InstanceType:
         default: Amazon EC2 instance type
       KeyPairName:
         default: Key Pair Name
       Password:
         default: Tableau Services Manager (TSM) administrator password
+      PublicSubnetIds:
+        default: Public Subnet IDs
+      PrivateSubnetIds:
+        default: Private Subnet IDs
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
@@ -59,6 +114,10 @@ Metadata:
         default: Tableau Activation Key
       Username:
         default: Tableau Services Manager (TSM) administrator username
+      VpcCidr:
+        default: VPC CIDR Block
+      VpcId:
+        default: VPC ID
 
 Parameters:
   AMIOS:
