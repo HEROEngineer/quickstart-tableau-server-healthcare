@@ -24,6 +24,10 @@
         "ParameterValue": "m5.4xlarge"
     },
     {
+        "ParameterKey": "SSLCertificateARN",
+        "ParameterValue": ""
+    },
+    {
         "ParameterKey": "KeyPairName",
         "ParameterValue": "$[taskcat_getkeypair]"
     },

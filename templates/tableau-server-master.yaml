@@ -34,6 +34,7 @@ Metadata:
       Parameters:
       - AWSPublicFQDN
       - AWSHostedZoneID
+      - SSLCertificateARN
     - Label:
         default: Secrets
       Parameters:
@@ -112,6 +113,8 @@ Metadata:
         default: Zip/Postal Code
       SourceCIDR:
         default: Source CIDR for Access
+      SSLCertificateARN:
+        default: SSL Certificate ARN (Requires matching DNS name)
       TableauServerAdminPassword:
         default: Tableau Server administrator password
       TableauServerAdminUser:
@@ -240,6 +243,10 @@ Parameters:
     ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
     Description: IP address/range to allow access from
     Type: String
+  SSLCertificateARN:
+    Type: String
+    Default: ""
+    Description: The Amazon Resource Name for the existing SSL cert you wish to use; empty for none
   TableauServerAdminPassword:
     Description: The password of the initial administrator for Tableau Server
     MinLength: 1
@@ -365,6 +372,7 @@ Resources:
         RegState: !Ref RegState
         RegZip: !Ref RegZip
         RegCountry: !Ref RegCountry
+        SSLCertificateARN: !Ref SSLCertificateARN
         VpcCidr: !GetAtt VPCStack.Outputs.VPCCIDR
         VpcId: !GetAtt VPCStack.Outputs.VPCID
         
