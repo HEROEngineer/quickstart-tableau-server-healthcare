@@ -109,6 +109,12 @@ Parameters:
   ImageId:
     Type: AWS::EC2::Image::Id
     Description: AmiId
+  QSTagKey:
+    Type: String
+    Description: Tag key to identify resources from this Quick Start
+  QSTagValue:
+    Type: String
+    Description: Tag value to identify resources from this Quick Start
 Mappings:
   DefaultConfiguration:
     InstallationConfig:
@@ -130,6 +136,10 @@ Resources:
       LaunchConfigurationName: !Ref TableauLaunchConfig
       MaxSize: 1
       MinSize: 1
+      Tags:
+      - Key: !Ref QSTagKey
+        Value: !Ref QSTagValue
+        PropagateAtLaunch: true
       TargetGroupARNs: !Ref ElbTargetGroups
       VPCZoneIdentifier: !Ref PrivateSubnetIds
     CreationPolicy:

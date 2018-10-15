@@ -284,6 +284,9 @@ Mappings:
       PrivateSubnet1CIDR: 10.0.2.0/24
       PublicSubnet2CIDR: 10.0.3.0/24
       PrivateSubnet2CIDR: 10.0.4.0/24
+    QuickStartTag:
+      Key: QuickStartID
+      Value: TableauServerHealthcare
 Conditions:
   IsWindows: !Equals [ !Ref AMIOS, Windows-Server-2012-R2 ]
   IsLinux: !Not [ Condition: IsWindows ]
@@ -301,6 +304,8 @@ Resources:
         PrivateSubnet2ACIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PrivateSubnet2CIDR ]
         PublicSubnet1CIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PublicSubnet1CIDR ]
         PublicSubnet2CIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PublicSubnet2CIDR ]
+        PublicSubnetTag2: !Join [ "=", [ !FindInMap [ DefaultConfiguration, QuickStartTag, Key ], !Join [ '-', [ !FindInMap [ DefaultConfiguration, QuickStartTag, Value ], !Ref "AWS::StackName"]]]]
+        PrivateSubnetATag2: !Join [ "=", [ !FindInMap [ DefaultConfiguration, QuickStartTag, Key ], !Join [ '-', [ !FindInMap [ DefaultConfiguration, QuickStartTag, Value ], !Ref "AWS::StackName"]]]]
         VPCCIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, VPCCIDR ]
 
   BastionStack:
@@ -338,6 +343,8 @@ Resources:
         Password: !Ref Password
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        QSTagKey: !FindInMap [ DefaultConfiguration, QuickStartTag, Key ]
+        QSTagValue: !Join [ '-', [ !FindInMap [ DefaultConfiguration, QuickStartTag, Value ], !Ref "AWS::StackName"]]
         PrivateSubnetIds: !Sub "${VPCStack.Outputs.PrivateSubnet1AID},${VPCStack.Outputs.PrivateSubnet2AID}"
         PublicSubnetIds: !Sub "${VPCStack.Outputs.PublicSubnet1ID},${VPCStack.Outputs.PublicSubnet2ID}"
         BastionSecurityGroup: !GetAtt BastionStack.Outputs.BastionSecurityGroupID

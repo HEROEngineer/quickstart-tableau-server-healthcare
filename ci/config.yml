@@ -15,19 +15,19 @@ tests:
  #   template_file: tableau-server-master.yaml
  #   regions:
  #     - us-west-2
-  quickstart-tableau-server-healthcaret-windows:
-    parameter_input: tableau-windows.json
-    template_file: tableau-server-master.yaml
-    regions:
-      - us-west-2
+ # quickstart-tableau-server-healthcaret-windows:
+ #   parameter_input: tableau-windows.json
+ #   template_file: tableau-server-master.yaml
+ #   regions:
+ #     - us-west-2
 #  quickstart-tableau-server-healthcaret-alinux:
 #    parameter_input: tableau-amazonlinux.json
 #    template_file: tableau-server-master.yaml
 #    regions:
 #      - us-west-2
-#  quickstart-tableau-server-healthcare-ubuntu:
-#    parameter_input: tableau-ubuntu.json
-#    template_file: tableau-server-master.yaml
-#    regions:
-#      - us-west-2
+  quickstart-tableau-server-healthcare-ubuntu:
+    parameter_input: tableau-ubuntu.json
+    template_file: tableau-server-master.yaml
+    regions:
+      - us-west-2
 

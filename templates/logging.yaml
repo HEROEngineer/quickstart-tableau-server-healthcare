@@ -1,6 +1,24 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation Template for basic logging functionality
+Description: CloudFormation Template for basic logging functionality. Sets up ELB logging and Config if 
+  the Config Recorder and Config Delivery Channel are not yet set up.
+
+Parameters:
+  ConfigRecorder:
+    Type: String
+    Default: ""
+    Description: Config Recorder ARN. Empty string will create a new Config Recorder. 
+      Will throw an error if you have a Config Recorder already created and leave this blank.
+  ConfigDeliveryChannel:
+    Type: String
+    Default: ""
+    Description: Config Delivery Channel. Must have if Config Recorder specified.
+  QSTagKey:
+    Type: String
+    Description: Tag key to identify resources from this Quick Start
+  QSTagValue:
+    Type: String
+    Description: Tag value to identify resources from this Quick Start
 
 Mappings:
   ElbLogging:
@@ -35,6 +53,10 @@ Mappings:
     sa-east-1:
       Principal: '507241528517'
 
+Conditions:
+  CreateLogBucket: !Equals [ LogBucketName, '' ]
+  CreateConfig: !And [ !Equals [ ConfigRecorder, '' ], !Equals [ ConfigDeliveryChannel, '' ] ]
+
 Resources:
   LogBucket:
     Type: AWS::S3::Bucket
@@ -43,8 +65,12 @@ Resources:
         ServerSideEncryptionConfiguration:
         - ServerSideEncryptionByDefault:
             SSEAlgorithm: AES256
+      Tags:
+      - Key: !Ref QSTagKey
+        Value: !Ref QSTagValue
       VersioningConfiguration:
         Status: Enabled
+      
   LogBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -70,33 +96,6 @@ Resources:
             - !FindInMap [ ElbLogging, !Ref "AWS::Region" , Principal ]
           Action: "s3:PutObject"
           Resource: !Sub arn:aws:s3:::${LogBucket}/*
-
-
-  #ConfigRecorderEnabled:
-   # Type: Custom::ConfigRecorderEnabled
-   # Properties:
-  #ConfigRecorderEnabledLambda:
-    #Type: AWS::Lambda::Function
-    #Properties:
-
-#      def lambda_handler(event, context)
-#  ConfigDeliveryChannelEnabled:
-#    Type: Custom::ConfigDeliveryChannelEnabled
-#    Properties:
-#      ServiceToken:
-#      VpcId: !Ref VpcId
-
-#  ConfigDeliveryChannelEnabledLambda:
-#    Type: AWS::Lambda::Function
-#    Properties:
-#      ServiceToken:
-
-#  ConfigRulesStack:
-#    Type: AWS::CloudFormation::Stack
-#    Properties:
-#      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/config-rules.yaml
-#      Parameters:
-#        LogBucket: !If [ NoLogBucket, !Ref LogBucket, LogBucketName ]
 
 Outputs:
   LogBucket:
