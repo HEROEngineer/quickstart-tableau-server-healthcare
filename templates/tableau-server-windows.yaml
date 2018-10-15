@@ -202,7 +202,7 @@ Metadata:
 Mappings:
   DefaultConfiguration:
     InstallationConfig:
-      InstallationBucket: testingtsmtableau
+      InstallationBucket: tableau-healthcare-quickstart
       InstallationExecutable: Tableau-Server-2018.2-Beta2-x64.exe
     MachineConfiguration:
       SystemVolumeSize: 50
