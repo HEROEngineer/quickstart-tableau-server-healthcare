@@ -1,34 +1,33 @@
 from __future__ import print_function
-from datetime import datetime
 import json
 import boto3
 
 config = boto3.client('config')
 ec2 = boto3.client('ec2')
 
+
 def evaluate_compliance(configuration_item, rule_parameters):
     undesired_port = int(rule_parameters['UndesiredPort'])
-    undesired_protocol = rule_parameters['UndesiredProtocol']
-    tag_key = rule_parameters['TagKey']
-    tag_value = rule_parameters['TagValue']
 
-    security_group_list = ec2.describe_security_groups(Filters=[{
-        'Name': 'tag:%s' % tag_key,
-        'Values': [ tag_value ]
-    }])
+    configuration = configuration_item['configuration']
 
-    for security_group in security_group_list['SecurityGroups']:
-        for port_range in security_group['IpPermissions']:
-            if undesired_port >= port_range['FromPort'] and undesired_port <= port_range['ToPort']:
-                return {
-                    'compliance_type': 'NON_COMPLIANT',
-                    'annotation': 'Security Group %s: Port %s is not blocked' % (security_group['GroupId'], str(undesired_port))
-                }
+    for ip_permissions in configuration['ipPermissions']:
+        if 'fromPort' not in ip_permissions and 'toPort' not in ip_permissions:
+            return {
+                'compliance_type': 'NON_COMPLIANT',
+                'annotation': 'Security Group is open to all traffic so port %s is not blocked' % str(undesired_port)
+            }
+        if ip_permissions['fromPort'] <= undesired_port <= ip_permissions['toPort']:
+            return {
+                'compliance_type': 'NON_COMPLIANT',
+                'annotation': 'Security Group port %s is not blocked' % str(undesired_port)
+            }
 
     return {
         'compliance_type': 'COMPLIANT',
-        'annotation': 'No security groups have port %s open for ingress' % str(undesired_port)
+        'annotation': 'Port %s not open for ingress' % str(undesired_port)
     }
+
 
 def lambda_handler(event, context):
     invoking_event = json.loads(event['invokingEvent'])
