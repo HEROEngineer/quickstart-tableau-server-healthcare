@@ -1,5 +1,4 @@
 from __future__ import print_function
-from datetime import datetime
 import json
 import boto3
 
@@ -9,16 +8,35 @@ elb = boto3.client('elbv2')
 
 def evaluate_compliance(configuration_item, rule_parameters):
     load_balancer_arn = configuration_item['configuration']['loadBalancerArn']
-    undesired_protocol = rule_parameters['undesiredProtocol']
+    desired_port = rule_parameters['DesiredPort']
+    desired_protocol = rule_parameters['DesiredProtocol']
 
     listeners_obj = elb.describe_listeners(LoadBalancerArn=load_balancer_arn)
 
+    print(json.dumps(listeners_obj))
+
     for listener in listeners_obj['Listeners']:
-        if undesired_protocol == listener['Protocol']:
+        if desired_protocol != listener['Protocol']:
             return {
                 'compliance_type': 'NON_COMPLIANT',
-                'annotation': 'Insecure %s protocol being used for the load balancer' % undesired_protocol
-    }
+                'annotation': 'Insecure %s protocol being used for the load balancer' % listener['Protocol']
+            }
+        if int(desired_port) != listener['Port']:
+            return {
+                'compliance_type': 'NON_COMPLIANT',
+                'annotation': '%s port being used for the load balancer rather than %s' % (listener['Port'], desired_port)
+            }
+        if len(listener['Certificates']) < 1:
+            return {
+                'compliance_type': 'NON_COMPLIANT',
+                'annotation': 'Does not have a SSL Cert installed'
+            }
+        for cert in listener['Certificates']:
+            if 'CertificateArn' not in cert:
+                return {
+                    'compliance_type': 'NON_COMPLIANT',
+                    'annotation': 'Invalid SSL Cert installed - no ARN found'
+                }
 
     return {
         'compliance_type': 'COMPLIANT',
@@ -30,9 +48,14 @@ def lambda_handler(event, context):
     invoking_event = json.loads(event['invokingEvent'])
     rule_parameters = json.loads(event['ruleParameters'])
 
+    print(json.dumps(invoking_event))
+    print(json.dumps(rule_parameters))
+
     configuration_item = invoking_event['configurationItem']
 
     evaluation = evaluate_compliance(configuration_item, rule_parameters)
+
+    print(json.dumps(evaluation))
 
     result_token = event['resultToken'] if 'resultToken' in event else 'No token found'
 
