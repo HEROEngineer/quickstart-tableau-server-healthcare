@@ -4,27 +4,31 @@ import json
 import boto3
 
 config = boto3.client('config')
-elb = boto3.client('elbv2')
-
+ec2 = boto3.client('ec2')
 
 def evaluate_compliance(configuration_item, rule_parameters):
-    load_balancer_arn = configuration_item['configuration']['loadBalancerArn']
-    undesired_protocol = rule_parameters['undesiredProtocol']
+    undesired_port = int(rule_parameters['UndesiredPort'])
+    undesired_protocol = rule_parameters['UndesiredProtocol']
+    tag_key = rule_parameters['TagKey']
+    tag_value = rule_parameters['TagValue']
 
-    listeners_obj = elb.describe_listeners(LoadBalancerArn=load_balancer_arn)
+    security_group_list = ec2.describe_security_groups(Filters=[{
+        'Name': 'tag:%s' % tag_key,
+        'Values': [ tag_value ]
+    }])
 
-    for listener in listeners_obj['Listeners']:
-        if undesired_protocol == listener['Protocol']:
-            return {
-                'compliance_type': 'NON_COMPLIANT',
-                'annotation': 'Insecure %s protocol being used for the load balancer' % undesired_protocol
-    }
+    for security_group in security_group_list['SecurityGroups']:
+        for port_range in security_group['IpPermissions']:
+            if undesired_port >= port_range['FromPort'] and undesired_port <= port_range['ToPort']:
+                return {
+                    'compliance_type': 'NON_COMPLIANT',
+                    'annotation': 'Security Group %s: Port %s is not blocked' % (security_group['GroupId'], str(undesired_port))
+                }
 
     return {
         'compliance_type': 'COMPLIANT',
-        'annotation': 'Load balancer is secure'
+        'annotation': 'No security groups have port %s open for ingress' % str(undesired_port)
     }
-
 
 def lambda_handler(event, context):
     invoking_event = json.loads(event['invokingEvent'])

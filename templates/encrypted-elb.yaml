@@ -90,7 +90,7 @@ Resources:
         Value: !Ref QSTagValue
       Type: application
 
-  # Create two listeners - one for HTTPS and other for TSM
+  # Create ELB Security Group
   ElbSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -100,15 +100,14 @@ Resources:
         FromPort: 443
         ToPort: 443
         CidrIp: !Ref VpcCidr
-      - IpProtocol: tcp
-        FromPort: 8850
-        ToPort: 8850
-        CidrIp: !Ref VpcCidr
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 0
-        ToPort: 65535
+        FromPort: 443
+        ToPort: 443
         CidrIp: !Ref SourceCIDR
+      Tags:
+      - Key: !Ref QSTagKey
+        Value: !Ref QSTagValue
       VpcId: !Ref VpcId
 
   ElbListenerHTTPS:

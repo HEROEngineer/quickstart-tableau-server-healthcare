@@ -5,6 +5,12 @@ Parameters:
   LogBucketName:
     Type: String
     Description: Log bucket
+  QSTagKey:
+    Type: String
+    Description: Tag key to identify resources from this Quick Start
+  QSTagValue:
+    Type: String
+    Description: Tag value to identify resources from this Quick Start
 
 Resources:
   # ConfigRole
@@ -68,7 +74,7 @@ Resources:
 
   ConfigRecorder:
     Type: AWS::Config::ConfigurationRecorder
-  #  Condition: NoConfigRecorder
+    #  Condition: NoConfigRecorder
     Properties:
       RecordingGroup:
         AllSupported: true
@@ -77,12 +83,13 @@ Resources:
   
   ConfigDeliveryChannel:
     Type: AWS::Config::DeliveryChannel
-  #  Condition: NoConfigDeliveryChannel
+    #  Condition: NoConfigDeliveryChannel
     Properties:
       S3BucketName: !Ref LogBucketName
       S3KeyPrefix: "config"
 
   #IAM Configuration Change Detected
+  
   #CloudTrail log config change detected
   CloudTrailEnabled:
     Description: Checks whether AWS CloudTrail is enabled in your AWS account
@@ -93,8 +100,8 @@ Resources:
     Source:
       Owner: AWS
       SourceIdentifier: CLOUD_TRAIL_ENABLED
+  
   #Config change detected
-
   TriggerConfigRecorderEnabled:
     Type: "AWS::Lambda::Permission"
     Properties:
@@ -106,9 +113,7 @@ Resources:
     DependsOn: ConfigRecorder
     Properties:
       ConfigRuleName: ConfigRecorderEnabled
-      Description: Checks if AWS Config recorder is turned on
-      InputParameters:
-        s3BucketName: !Ref LogBucketName
+      Description: Checks if AWS Config recorder is turned on. N.B. This current rule does not check for S3 or SNS delivery mechanisms.
       Source:
         Owner: CUSTOM_LAMBDA
         SourceIdentifier: !Ref LambdaConfigRecorderEnabled
@@ -152,20 +157,6 @@ Resources:
                       'compliance_type': 'NON_COMPLIANT',
                       'annotation': 'No delivery channel for config recorder'
                   }
-              if 's3BucketName' in rule_parameters:
-                  for channel in delivery_channels_response['DeliveryChannels']:
-                      if channel['s3BucketName'] != rule_parameters['s3BucketName']:
-                          return {
-                              'compliance_type': 'NON_COMPLIANT',
-                              'annotation': 'Config recorder writing to incorrect bucket'
-                          }
-              if 'snsTopicARN' in rule_parameters:
-                  for channel in delivery_channels_response['DeliveryChannels']:
-                      if channel['snsTopicARN'] != rule_parameters['snsTopicARN']:
-                          return {
-                              'compliance_type': 'NON_COMPLIANT',
-                              'annotation': 'Config recording writing to incorrect SNS topic'
-                          }
               return {
                   'compliance_type': 'COMPLIANT',
                   'annotation': 'Config recorder enabled with appropriate delivery channel'
@@ -189,14 +180,98 @@ Resources:
               )
           
   #ELB Config change detected
-  ALBEncryption:
-    Type: AWS::Config::ConfigRule
+  TriggerALBEncryption:
+    Type: "AWS::Lambda::Permission"
     Properties:
-      Description: Checks to ensure that all application load balancers are only reachable via HTTPS endpoints and not HTTP
-      MaximumExecutionFrequency:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaConfigRecorderEnabled
+      Principal: config.amazonaws.com
+  RuleALBEncryption:
+    Type: AWS::Config::ConfigRule
+    DependsOn: ConfigRecorder
+    Properties:
+      ConfigRuleName: ALBEncryption
+      Description: Checks to ensure that all application load balancers are only reachable via HTTPS endpoints and not HTTP as well as have a cert on the listener
+      InputParameters:
+        DesiredPort: 443
+        DesiredProtocol: HTTPS
       Scope:
+        ComplianceResourceTypes:
+        - AWS::ElasticLoadBalancingV2::LoadBalancer
+        TagKey: !Ref QSTagKey
+        TagValue: !Ref QSTagValue
       Source:
         Owner: CUSTOM_LAMBDA
+        SourceIdentifier: !Ref LambdaALBEncryption
+        SourceDetails:
+        - EventSource: aws.config
+          MaximumExecutionFrequency: One_Hour
+          MessageType: ScheduledNotification
+  LambdaALBEncryption:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Checks if Config Recorder is enabled
+      Handler: index.handler
+      Runtime: python3.6
+      Role: !GetAtt LambdaConfigRecorderRole
+      Timeout: 30
+      Code:
+        ZipFile: | 
+          from __future__ import print_function
+          from datetime import datetime
+          import json
+          import boto3
+          config = boto3.client('config')
+          elb = boto3.client('elbv2')
+          def evaluate_compliance(configuration_item, rule_parameters):
+              load_balancer_arn = configuration_item['configuration']['loadBalancerArn']
+              desired_port = int(rule_parameters['DesiredPort'])
+              desired_protocol = rule_parameters['DesiredProtocol']
+              listeners_obj = elb.describe_listeners(LoadBalancerArn=load_balancer_arn)
+              for listener in listeners_obj['Listeners']:
+                  if desired_protocol != listener['Protocol']:
+                      return {
+                          'compliance_type': 'NON_COMPLIANT',
+                          'annotation': 'Listener %s on Load Balancer %s: Insecure %s protocol being used for the load balancer' % (listener['ListenerArn'], listener['LoadBalancerArn'], listener['Protocol'])
+                      }
+                  if desired_port != listener['Protocol']:
+                      return {
+                          'compliance_type': 'NON_COMPLIANT',
+                          'annotation': 'Listener %s on Load Balancer %s: %s port being used for the load balancer rather than %s' % (listener['ListenerArn'], listener['LoadBalancerArn'], listener['Port'], desired_port)
+                      }
+                  if len(listener['Certificates']) < 1:
+                      return {
+                          'compliance_type': 'NON_COMPLIANT',
+                          'annotation': 'Listener %s on Load Balancer %s: Does not have a SSL Cert installed' % (listener['ListenerArn'], listener['LoadBalancerArn'])
+                      }
+                  for cert in listener['Certificates']:
+                      if 'CertificateArn' not in cert:
+                          return {
+                              'compliance_type': 'NON_COMPLIANT',
+                              'annotation': 'Listener %s on Load Balancer %s: Invalid SSL Cert installed - no ARN found' % (listener['ListenerArn'], listener['LoadBalancerArn'])
+                          }
+              return {
+                  'compliance_type': 'COMPLIANT',
+                  'annotation': 'Load balancer is configured with %s on port %s' % (desired_protocol, desired_port)
+              }
+          def lambda_handler(event, context):
+              invoking_event = json.loads(event['invokingEvent'])
+              rule_parameters = json.loads(event['ruleParameters'])
+              configuration_item = invoking_event['configurationItem']
+              evaluation = evaluate_compliance(configuration_item, rule_parameters)
+              result_token = event['resultToken'] if 'resultToken' in event else 'No token found'
+              config.put_evaluations(
+                  Evaluations=[
+                      {
+                          'ComplianceResourceType': configuration_item['resourceType'],
+                          'ComplianceResourceId': configuration_item['resourceId'],
+                          'ComplianceType': evaluation['compliance_type'],
+                          'Annotation': evaluation['annotation'],
+                          'OrderingTimestamp': configuration_item['configurationItemCaptureTime']
+                      },
+                  ],
+                  ResultToken=result_token
+              )
 
   # EBS volume changes detected
   EBSVolumeEncryption:
@@ -206,6 +281,8 @@ Resources:
       Scope:
         ComplianceResourceTypes:
         - AWS::EC2::Volume
+        TagKey: !Ref QSTagKey
+        TagValue: !Ref QSTagValue
       Source:
         Owner: AWS
         SourceIdentifier: ENCRYPTED_VOLUMES
@@ -232,29 +309,25 @@ Resources:
         Owner: AWS
         SourceIdentifier: S3_BUCKET_PUBLIC_WRITE_PROHIBITED
 
-  S3EncryptionEnabled:
-    Type: AWS::Config::ConfigRule
-    Properties:
-      # N.B. May need to update this policy
-      Description: Checks for explicit denies on put-object requests without server side encryption.
-      Scope:
-        ComplianceResourceTypes:
-        - AWS::S3::Bucket
-      Source:
-        Owner: AWS
-        SourceIdentifier: S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED 
-
-  S3VersioningEnabled:
-    Type: AWS::Config::ConfigRule
-    Properties:
-      Description: Checks whether versioning is enabled for your S3 buckets
-      Scope:
-        ComplianceResourceTypes:
-        - AWS::S3::Bucket
-      Source:
-        Owner: AWS
-        SourceIdentifier: S3_BUCKET_VERSIONING_ENABLED 
   #Update or delete of a security Group
+  RuleSecurityGroupPortBlocked:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      Description: Checks to ensure security groups do not have a specific port open
+      InputParameters:
+        UndesiredPort: 80
+      Scope:
+        ComplianceResourceTypes:
+        - AWS::EC2::SecurityGroup
+        TagKey: !Ref QSTagKey
+        TagValue: !Ref QSTagValue
+      Source:
+        Owner: CUSTOM_LAMBDA
+        SourceIdentifier: !Ref LambdaSecurityGroupPortBlocked
+        SourceDetails:
+        - EventSource: aws.config
+          MaximumExecutionFrequency: One_Hour
+          MessageType: ScheduledNotification
 
   UnrestrictedSSH:
     Type: AWS::Config::ConfigRule
@@ -263,6 +336,8 @@ Resources:
       Scope:
         ComplianceResourceTypes:
         - AWS::EC2::SecurityGroup
+        TagKey: !Ref QSTagKey
+        TagValue: !Ref QSTagValue
       Source:
         Owner: AWS
         SourceIdentifier: INCOMING_SSH_DISABLED
@@ -273,13 +348,14 @@ Resources:
       Description: Checks whether security groups that are in use disallow unrestricted incoming TCP traffic to the specified ports.
       InputParameters:
         blockedPort1: 22
-        blockedPort2: 443
         blockedPort3: 80
         blockedPort4: 3389
         blockedPort5: 8850
       Scope:
         ComplianceResourceTypes:
         - AWS::EC2::SecurityGroup
+        TagKey: !Ref QSTagKey
+        TagValue: !Ref QSTagValue
       Source:
         Owner: AWS
         SourceIdentifier: RESTRICTED_INCOMING_TRAFFIC
