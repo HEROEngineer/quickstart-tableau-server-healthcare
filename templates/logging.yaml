@@ -72,7 +72,7 @@ Mappings:
       Principal: '507241528517'
 
 Conditions:
-  CreateConfig: !And [ !Equals [ ConfigRecorder, '' ], !Equals [ ConfigDeliveryChannel, '' ] ]
+  CreateConfig: !And [ !Equals [ !Ref ConfigRecorderName, '' ], !Equals [ !Ref ConfigDeliveryChannelName, '' ] ]
 
 Resources:
   LogBucket:
@@ -166,8 +166,8 @@ Resources:
     Properties:
       RecordingGroup:
         AllSupported: true
-        IncludedGlobalResourcesTypes: true
-      RoleArn: !GetAtt ConfigRole.Arn
+        IncludeGlobalResourcesTypes: true
+      RoleARN: !GetAtt ConfigRole.Arn
 
   ConfigDeliveryChannel:
     Type: AWS::Config::DeliveryChannel
@@ -176,11 +176,14 @@ Resources:
       ConfigSnapshotDeliveryProperties:
         DeliveryFrequency: One_Hour
       S3BucketName: !Ref LogBucket
-      S3KeyPrefix: "config/"
-      SNSTopicARN: !Ref ConfigSNS
+      S3KeyPrefix: "config"
+      SnsTopicARN: !Ref ConfigSNS
 
   ConfigRulesStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - ConfigRole
+    - ConfigRolePolicy
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/config-rules.yaml
       Parameters:

@@ -37,7 +37,6 @@ Resources:
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/service-role/AWSConfigRulesExecutionRole
       - arn:aws:iam::aws:policy/service-role/AWSConfigRole
-      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
       - PolicyName: DescribeForConfig
         PolicyDocument:
@@ -45,19 +44,11 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-            - elasticloadbalancing:DescribeLoadBalancers
-            - elasticloadbalancing:DescribeListeners
-            - elasticloadbalancing:DescribeTags
+            - config:Describe*
+            - elasticloadbalancing:Describe*
             - ec2:DescribeSecurityGroups
             Resource:
-            - !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:security-group/*
-            - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/*
-            - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener/*
-            - !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/*
-            Condition:
-              ForAnyValue:StringEquals:
-                aws:TagKeys:
-                - !Ref QSTagKey
+            - "*"
   
   #CloudTrail log config change detected
   CloudTrailEnabled:
