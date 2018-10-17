@@ -15,6 +15,8 @@ Metadata:
         - SourceCIDR
         - VpcCidr
         - VpcId
+        - ConfigRecorder
+        - ConfigDeliveryChannel
       - Label:
           default: Server DNS configuration
         Parameters:
@@ -63,6 +65,10 @@ Metadata:
         default: Accept Tableau End User License Agreement
       BastionSecurityGroup:
         default: Bastion Host Security Group ID
+      ConfigRecorder:
+        default: AWS Config Recorder
+      ConfigDeliveryChannel:
+        defualt: AWS Config Delivery Channel
       InstanceType:
         default: Amazon EC2 instance type
       KeyPairName:
@@ -147,6 +153,14 @@ Parameters:
   BastionSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
     Description: Security Group for the Bastion Host
+  ConfigRecorder:
+    Type: String
+    Default: ""
+    Description: Config Recorder in your AWS Region. Leaving empty will try to create a new recorder.
+  ConfigDeliveryChannel:
+    Type: String
+    Default: ""
+    Description: Config Delivery Channel in your AWS Region. Leaving empty will try to create a new recorder. Required if you specify Config Recorder
   InstanceType:
     AllowedValues:
     - c5.4xlarge
@@ -388,6 +402,10 @@ Resources:
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
       Parameters:
+        ConfigRecorderName: !Ref ConfigRecorder
+        ConfigDeliveryChannelName: !Ref ConfigDeliveryChannel
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSTagKey: !Ref QSTagKey
         QSTagValue: !Ref QSTagValue
 

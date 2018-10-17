@@ -29,6 +29,8 @@ Metadata:
       - AMIOS
       - SourceCIDR
       - BastionAdminCIDR
+      - ConfigRecorder
+      - ConfigDeliveryChannel
     - Label:
         default: Server DNS configuration
       Parameters:
@@ -77,6 +79,10 @@ Metadata:
         default: Availability Zones
       BastionAdminCIDR:
         default: CIDR for Bastion Host Access
+      ConfigRecorder:
+        default: AWS Config Recorder
+      ConfigDeliveryChannel:
+        defualt: AWS Config Delivery Channel
       InstanceType:
         default: Amazon EC2 instance type
       KeyPairName:
@@ -149,6 +155,14 @@ Parameters:
     Description: 'List of Availability Zones to use for the subnets in the VPC. Note:
       The logical order is preserved and 3 AZs MUST be used for this deployment'
     Type: List<AWS::EC2::AvailabilityZone::Name>
+  ConfigRecorder:
+    Type: String
+    Default: ""
+    Description: Config Recorder in your AWS Region. Leaving empty will try to create a new recorder.
+  ConfigDeliveryChannel:
+    Type: String
+    Default: ""
+    Description: Config Delivery Channel in your AWS Region. Leaving empty will try to create a new recorder. Required if you specify Config Recorder
   InstanceType:
     AllowedValues:
     - c5.4xlarge

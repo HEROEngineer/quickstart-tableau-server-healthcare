@@ -4,15 +4,33 @@ Description: CloudFormation Template for basic logging functionality. Sets up EL
   the Config Recorder and Config Delivery Channel are not yet set up.
 
 Parameters:
-  ConfigRecorder:
+  ConfigRecorderName:
     Type: String
     Default: ""
-    Description: Config Recorder ARN. Empty string will create a new Config Recorder. 
-      Will throw an error if you have a Config Recorder already created and leave this blank.
-  ConfigDeliveryChannel:
+    Description: Config Recorder. Empty string will create a new Config Recorder.
+  ConfigDeliveryChannelName:
     Type: String
     Default: ""
     Description: Config Delivery Channel. Must have if Config Recorder specified.
+  QSS3BucketName:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
+      or end with a hyphen (-).
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: "^[0-9a-zA-Z-/]*$"
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/).
+    Default: quickstart-tableau-server-healthcare/
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/).
+    Type: String
   QSTagKey:
     Type: String
     Description: Tag key to identify resources from this Quick Start
@@ -54,7 +72,6 @@ Mappings:
       Principal: '507241528517'
 
 Conditions:
-  CreateLogBucket: !Equals [ LogBucketName, '' ]
   CreateConfig: !And [ !Equals [ ConfigRecorder, '' ], !Equals [ ConfigDeliveryChannel, '' ] ]
 
 Resources:
@@ -96,6 +113,83 @@ Resources:
             - !FindInMap [ ElbLogging, !Ref "AWS::Region" , Principal ]
           Action: "s3:PutObject"
           Resource: !Sub arn:aws:s3:::${LogBucket}/*
+
+  # ConfigRole
+  ConfigRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - "config.amazonaws.com"
+          Action:
+            - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSConfigRulesExecutionRole
+      - arn:aws:iam::aws:policy/service-role/AWSConfigRole
+
+  ConfigSNS:
+    Type: AWS::SNS::Topic
+    Condition: CreateConfig
+
+  ConfigRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ConfigRolePolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Action:
+          - s3:PutObject
+          Resource: !Sub arn:aws:s3:::${LogBucket}/*
+          Condition:
+            StringLike:
+              s3:x-amz-acl: bucket-owner-full-control
+        - Effect: Allow
+          Action:
+          - lambda:InvokeFunction
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - "config:Put*"
+          Resource: "*"
+      Roles:
+      - !Ref ConfigRole
+
+  ConfigRecorder:
+    Type: AWS::Config::ConfigurationRecorder
+    Condition: CreateConfig
+    Properties:
+      RecordingGroup:
+        AllSupported: true
+        IncludedGlobalResourcesTypes: true
+      RoleArn: !GetAtt ConfigRole.Arn
+
+  ConfigDeliveryChannel:
+    Type: AWS::Config::DeliveryChannel
+    Condition: CreateConfig
+    Properties:
+      ConfigSnapshotDeliveryProperties:
+        DeliveryFrequency: One_Hour
+      S3BucketName: !Ref LogBucket
+      S3KeyPrefix: "config/"
+      SNSTopicARN: !Ref ConfigSNS
+
+  ConfigRulesStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/config-rules.yaml
+      Parameters:
+        ConfigRecorder: !If [ CreateConfig, !Ref ConfigRecorder, !Ref ConfigRecorderName ]
+        ConfigDeliveryChannel: !If [ CreateConfig, !Ref ConfigDeliveryChannel, !Ref ConfigDeliveryChannelName ]
+        LogBucketName: !Ref LogBucket
+        QSTagKey: !Ref QSTagKey
+        QSTagValue: !Ref QSTagValue
+    
 
 Outputs:
   LogBucket:
