@@ -394,6 +394,7 @@ Conditions:
   IsLinux: !Not [ Condition: IsWindows ]
   IsUbuntu: !Equals [ !Ref AMIOS,  Ubuntu-Server-16.04-LTS-HVM ]
   IsCentosOrAmazonLinux: !Or [ !Equals [ !Ref AMIOS,  CentOS-7-HVM ], !Equals [ !Ref AMIOS, Amazon-Linux-2 ] ]
+  NoSSLCertificate: !Equals [ '', !Ref SSLCertificateARN ]
 
 Resources:
   # Create a log bucket
@@ -441,6 +442,8 @@ Resources:
         AmiId: !FindInMap [ AWSAMIRegionMap , !Ref "AWS::Region", !FindInMap [ AWSAMINameMap, !Ref AMIOS, Code ] ]
         AmiRegion: !Ref "AWS::Region"
         SubnetId: !Select [ 0, !Ref PrivateSubnetIds ]
+        QSTagKey: !Ref QSTagKey
+        QSTagValue: !Ref QSTagValue
 
   # Configure Instance Security Group
   InstanceSecurityGroup:
@@ -465,12 +468,41 @@ Resources:
         Value: !Ref QSTagValue
       VpcId: !Ref VpcId
 
+  TableauServerInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: CreateTags
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - ec2:Describe*
+            - ec2:CreateTags
+            Resource: "*"
+  TableauServerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+      - !Ref TableauServerInstanceRole
+
   TableauServerWindows:
     Type: AWS::CloudFormation::Stack
     Condition: IsWindows
     DependsOn: 
     - EncryptAmiStack
     - ElbStack
+    - TableauServerInstanceProfile
     Properties:
       TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-windows.yaml
       Parameters:
@@ -479,6 +511,7 @@ Resources:
         ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
         InstanceSecurityGroup: !Ref InstanceSecurityGroup
         InstanceType: !Ref InstanceType
+        TableauServerInstanceProfile: !Ref TableauServerInstanceProfile
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
         PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds]
@@ -515,6 +548,7 @@ Resources:
         ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
         InstanceSecurityGroup: !Ref InstanceSecurityGroup
         InstanceType: !Ref InstanceType
+        TableauServerInstanceProfile: !Ref TableauServerInstanceProfile
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
         PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds ]
@@ -552,6 +586,7 @@ Resources:
         ImageId: !GetAtt EncryptAmiStack.Outputs.EncryptedAmiId
         InstanceSecurityGroup: !Ref InstanceSecurityGroup
         InstanceType: !Ref InstanceType
+        TableauServerInstanceProfile: !Ref TableauServerInstanceProfile
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
         PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds ]
@@ -574,9 +609,71 @@ Resources:
         TableauServerLicenseKey: !Ref TableauServerLicenseKey
         Username: !Ref Username
  
+  # Clean up resources
+  CleanupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: ConfigPolicy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Sid: Logging
+            Effect: Allow
+            Action: logs:*
+            Resource: '*'
+          - Sid: S3Bucket
+            Effect: Allow
+            Action: s3:*
+            Resource: 
+              Fn::If: 
+              - NoSSLCertificate
+              - - !Sub arn:aws:s3:::${LogStack.Outputs.LogBucket}
+                - !Sub arn:aws:s3:::${ElbStack.Outputs.LambdaZipsBucket}
+              - - !Sub arn:aws:s3:::${LogStack.Outputs.LogBucket}
+          - Sid: S3Object
+            Effect: Allow
+            Action: s3:*
+            Resource: 
+              Fn::If: 
+              - NoSSLCertificate
+              - - !Sub arn:aws:s3:::${LogStack.Outputs.LogBucket}/*
+                - !Sub arn:aws:s3:::${ElbStack.Outputs.LambdaZipsBucket}/*
+              - - !Sub arn:aws:s3:::${LogStack.Outputs.LogBucket}/*
+
+  # Cleanup Buckets
+  CleanupLogBucket:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+    - CleanupRole
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/clean-bucket.yaml
+      Parameters:
+        Bucket: !GetAtt LogStack.Outputs.LogBucket
+        ServiceToken: !GetAtt CleanupRole.Arn
+  CleanupLambdaZipsBucket:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: 
+    - CleanupRole
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/clean-bucket.yaml
+      Parameters:
+        Bucket: !GetAtt LogStack.Outputs.LogBucket
+        ServiceToken: !GetAtt CleanupRole.Arn
+
+
 Outputs:
   ElbDns:
     Value: !GetAtt ElbStack.Outputs.ElbDns
   RecordSet: 
     Value: !GetAtt ElbStack.Outputs.RecordSet
     Description: Domain Name of the Record Set
+  
