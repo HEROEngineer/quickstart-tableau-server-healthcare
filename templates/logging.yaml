@@ -166,7 +166,7 @@ Resources:
     Properties:
       RecordingGroup:
         AllSupported: true
-        IncludeGlobalResourcesTypes: true
+        IncludeGlobalResourceTypes: true
       RoleARN: !GetAtt ConfigRole.Arn
 
   ConfigDeliveryChannel:
