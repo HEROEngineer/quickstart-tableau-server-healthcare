@@ -164,3 +164,6 @@ Outputs:
   RecordSet:
     Value: !Ref RecordAlias
     Description: Domain Name of the Record Set
+  LambdaZipsBucket:
+    Value: !If [ NoSSLCertificate, !GetAtt ConfigureSSLStack.Outputs.LambdaZipsBucket, !Ref "AWS::NoValue" ]
+    Description: Bucket of Lambda Artifacts

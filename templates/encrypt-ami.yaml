@@ -20,6 +20,12 @@ Parameters:
   SubnetId:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet to launch EC2 instance if the base AMI is a Marketplace or Windows AMI.
+  QSTagKey:
+    Type: String
+    Description: Tag key to identify resources from this Quick Start
+  QSTagValue:
+    Type: String
+    Description: Tag value to identify resources from this Quick Start
 
 Resources:
   # Set up State Machine
@@ -32,6 +38,8 @@ Resources:
       Region: !Ref AmiRegion
       AmiId: !Ref AmiId
       WaitHandle: !Ref EncryptWaitHandle
+      QSTagKey: !Ref QSTagKey
+      QSTagValue: !Ref QSTagValue
   EncryptAmiStateMachineLambda:
     Type: AWS::Lambda::Function
     Properties:

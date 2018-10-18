@@ -107,6 +107,9 @@ Parameters:
   QSTagValue:
     Type: String
     Description: Tag value to identify resources from this Quick Start
+  TableauServerInstanceProfile:
+    Type: String
+    Description: Tableau Server Instance Role. Used for tagging EBS volumes
 Mappings:
   DefaultConfiguration:
     InstallationConfig:
@@ -202,6 +205,7 @@ Resources:
           Ebs:
             VolumeType: gp2
             VolumeSize: !FindInMap [ DefaultConfiguration, MachineConfiguration, SystemVolumeSize ]
+      IamInstanceProfile: !Ref TableauServerInstanceProfile
       ImageId: !Ref ImageId
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyPairName
@@ -214,7 +218,12 @@ Resources:
             #!/bin/bash -x
             set -e
 
-            apt-get update && apt-get install -y python-setuptools && apt-get clean
+            apt-get update && apt-get install -y python-setuptools awscli && apt-get clean
+
+            # Tag EBS Volume
+            EC2_INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+            DISK_IDS=$(aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=$EC2_INSTANCE_ID --query 'Volumes[*].[VolumeId]' --region=${AWS::Region} --out "text" | cut -f 1)
+            aws ec2 create-tags --resources $DISK_IDS --tags Key=${QSTagKey},Value=${QSTagValue} --region ${AWS::Region}
 
             # Call Init
             /usr/bin/easy_install --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz

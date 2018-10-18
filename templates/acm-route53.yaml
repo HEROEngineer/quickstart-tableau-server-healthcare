@@ -104,4 +104,7 @@ Outputs:
   ACMCertificate:
     Description: ARN of the ACM-Generated SSL Certificate
     Value: !GetAtt ACMCertificateDNS.Arn
+  LambdaZipsBucket:
+    Value: !GetAtt CopyLambdaStack.Outputs.LambdaZipsBucket
+    Description: Bucket of Lambda Artifacts
   

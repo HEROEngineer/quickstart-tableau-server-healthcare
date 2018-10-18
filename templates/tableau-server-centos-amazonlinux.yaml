@@ -115,6 +115,9 @@ Parameters:
   QSTagValue:
     Type: String
     Description: Tag value to identify resources from this Quick Start
+  TableauServerInstanceProfile:
+    Type: String
+    Description: Tableau Server Instance Role. Used for tagging EBS volumes
 Mappings:
   DefaultConfiguration:
     InstallationConfig:
@@ -214,6 +217,7 @@ Resources:
             VolumeSize: !FindInMap [ DefaultConfiguration, MachineConfiguration, SystemVolumeSize ]
       ImageId: !Ref ImageId
       InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref TableauServerInstanceProfile
       KeyName: !Ref KeyPairName
       SecurityGroups:
       - !Ref InstanceSecurityGroup
@@ -224,7 +228,11 @@ Resources:
             #!/bin/bash -x
             set -e
 
-            yum -y update
+            yum -y update && yum install awscli -y
+
+            EC2_INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+            DISK_IDS=$(aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=$EC2_INSTANCE_ID --query 'Volumes[*].[VolumeId]' --region=${AWS::Region} --out "text" | cut -f 1)
+            aws ec2 create-tags --resources $DISK_IDS --tags Key=${QSTagKey},Value=${QSTagValue} --region ${AWS::Region}
 
             # Call Init
             ${CfnInitInstall}
@@ -290,7 +298,7 @@ Resources:
             #rm -f /tmp/automated-installer
           - Trial: !If [ IsTrial, '', !Sub ' -k ${TableauServerLicenseKey} ']
             CfnInitInstall: !If [ IsAmazonLinux, '', '/usr/bin/easy_install --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz' ]
-
+            RootVolMap: !If [ IsAmazonLinux, /dev/xvda, /dev/sda1 ]
 Outputs:
   TableauASG: 
     Value: !Ref TableauASG
