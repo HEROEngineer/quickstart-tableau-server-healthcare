@@ -60,33 +60,33 @@ Metadata:
       AWSHostedZoneID:
         default: DNS Zone ID
       AWSPublicFQDN:
-        default: Full DNS Name for Cluster
+        default: Full DNS Name for Tableau Server
       AcceptEULA:
         default: Accept Tableau End User License Agreement
       BastionSecurityGroup:
         default: Bastion Host Security Group ID
       ConfigRecorder:
-        default: AWS Config Recorder
+        default: AWS Config Recorder ARN
       ConfigDeliveryChannel:
-        defualt: AWS Config Delivery Channel
+        defualt: AWS Config Delivery Channel ARN
       InstanceType:
-        default: Amazon EC2 instance type
+        default: Tableau Server instance type
       KeyPairName:
         default: Key Pair Name
       Password:
         default: Tableau Services Manager (TSM) administrator password
       PublicSubnetIds:
-        default: Public Subnet IDs
+        default: Public Subnet IDs in your VPC
       PrivateSubnetIds:
-        default: Private Subnet IDs
+        default: Private Subnet IDs in your VPC
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
       QSTagKey:
-        default: Quick Start Tag Key
+        default: Quick Start Tag key
       QSTagValue:
-        default: Quick Start Tag Value
+        default: Quick Start Tag value
       RegCity:
         default: City
       RegCompany:
@@ -135,13 +135,14 @@ Parameters:
       - CentOS-7-HVM
       - Ubuntu-Server-16.04-LTS-HVM
       - Windows-Server-2012-R2
-    Description: The Linux or Windows distribution for the AMI to be used for the EC2 instances
+    Description: The operating system (Microsoft Windows Server, CentOS, Ubuntu Server, or Amazon Linux 2) on the EC2 instance where Tableau Server will be installed. If you choose CentOS, make sure that you have a subscription to the CentOS AMI in AWS Marketplace
+    Default: Amazon-Linux-2
     Type: String
   AWSHostedZoneID:
-    Description: DNS Zone ID to contain the cluster's DNS entry (blank = no DNS)
+    Description: DNS Zone ID to contain the server's DNS entry.
     Type: String
   AWSPublicFQDN:
-    Description: Tableau Server portal will be reachable at this address (blank = no DNS)
+    Description: Tableau Server portal will be reachable at this address.
     Type: String
   AcceptEULA:
     AllowedPattern: 'Yes'
@@ -152,7 +153,7 @@ Parameters:
     Type: String
   BastionSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
-    Description: Security Group for the Bastion Host
+    Description: EC2 Security Group for the bastion host.
   ConfigRecorder:
     Type: String
     Default: ""
@@ -171,7 +172,7 @@ Parameters:
     - r5d.4xlarge
     ConstraintDescription: must be a valid EC2 instance type.
     Default: m5.4xlarge
-    Description: Amazon EC2 instance type
+    Description: The EC2 instance type where Tableau Server will be installed.
     Type: String
   KeyPairName:
     AllowedPattern: ".+"
@@ -186,13 +187,13 @@ Parameters:
     MinLength: '8'
   PublicSubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
-    Description: Public subnets in your VPC
+    Description: Public subnets in your VPC.
   PrivateSubnetIds:
     Type: List<AWS::EC2::Subnet::Id>
-    Description: Private subnets in your VPC
+    Description: Private subnets in your VPC.
   VpcCidr:
     Type: String
-    Description: VPC CIDR
+    Description: VPC CIDR Block.
   QSS3BucketName:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -214,10 +215,10 @@ Parameters:
     Type: String
   QSTagKey:
     Type: String
-    Description: Tag key to identify resources from this Quick Start
+    Description: Tag key to identify resources from this Quick Start.
   QSTagValue:
     Type: String
-    Description: Tag value to identify resources from this Quick Start
+    Description: Tag value to identify resources from this Quick Start.
   RegCity:
     Description: City
     MinLength: 1
