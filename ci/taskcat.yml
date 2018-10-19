@@ -7,6 +7,7 @@ global:
     - us-east-2
     - us-west-1
     - us-west-2
+    - eu-west-1
   reporting: true
  
 tests:
@@ -24,7 +25,7 @@ tests:
     parameter_input: tableau-amazonlinux.json
     template_file: tableau-server-master.yaml
     regions:
-      - us-west-1
+      - eu-west-1
   quickstart-tableau-server-healthcare-ubuntu:
     parameter_input: tableau-ubuntu.json
     template_file: tableau-server-master.yaml
