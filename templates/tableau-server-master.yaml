@@ -84,7 +84,7 @@ Metadata:
       ConfigDeliveryChannel:
         defualt: AWS Config Delivery Channel
       InstanceType:
-        default: Amazon EC2 instance type
+        default: Tableau Server instance type
       KeyPairName:
         default: Key Pair Name
       Password:
@@ -136,13 +136,14 @@ Parameters:
       - CentOS-7-HVM
       - Ubuntu-Server-16.04-LTS-HVM
       - Windows-Server-2012-R2
-    Description: The Linux or Windows distribution for the AMI to be used for the EC2 instances
+    Description: The operating system (Microsoft Windows Server, CentOS, Ubuntu Server, or Amazon Linux 2) on the EC2 instance where Tableau Server will be installed. If you choose CentOS, make sure that you have a subscription to the CentOS AMI in AWS Marketplace
+    Default: Amazon-Linux-2
     Type: String
   AWSHostedZoneID:
-    Description: DNS Zone ID to contain the cluster's DNS entry (blank = no DNS)
+    Description: DNS Zone ID to contain the server's DNS entry.
     Type: String
   AWSPublicFQDN:
-    Description: Tableau Server portal will be reachable at this address (blank = no DNS)
+    Description: Tableau Server portal will be reachable at this address.
     Type: String
   AcceptEULA:
     AllowedPattern: 'Yes'
@@ -152,8 +153,8 @@ Parameters:
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
   AvailabilityZones:
-    Description: 'List of Availability Zones to use for the subnets in the VPC. Note:
-      The logical order is preserved and 3 AZs MUST be used for this deployment'
+    Description: 'List of Availability Zones to use for the subnets in the VPC. 
+      You must use two Availabilty Zones. The Quick Start preserves the logical order you specify.'
     Type: List<AWS::EC2::AvailabilityZone::Name>
   ConfigRecorder:
     Type: String
@@ -173,7 +174,7 @@ Parameters:
     - r5d.4xlarge
     ConstraintDescription: must be a valid EC2 instance type.
     Default: m5.4xlarge
-    Description: Amazon EC2 instance type
+    Description: The EC2 instance type where Tableau Server will be installed.
     Type: String
   KeyPairName:
     AllowedPattern: ".+"
@@ -255,7 +256,7 @@ Parameters:
   SourceCIDR:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
     ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
-    Description: IP address/range to allow access from
+    Description: "The CIDR address from which you will connect to the instance. We recommend that you set this value to a trusted CIDR block to restrict access to IP addresses from only your network. The CIDR block parameter must be in the form x.x.x.x/x. Specify separate IP address ranges for these three ports: port 443, port 8850, and port 3389."
     Type: String
   SSLCertificateARN:
     Type: String
