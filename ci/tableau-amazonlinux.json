@@ -25,11 +25,11 @@
     },
     {
         "ParameterKey": "ConfigRecorder",
-        "ParameterValue": "tCaT-tag-quickstart-tableau-server-healthcaret-windows-013f913d-TableauStack-LogStack-15O4FLTILGK1R-ConfigRecorder-DHRMICRGBS8S"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "ConfigDeliveryChannel",
-        "ParameterValue": "tCaT-tag-quickstart-tableau-server-healthcaret-windows-013f913d-TableauStack-LogStack-15O4FLTILGK1R-ConfigDeliveryChannel-1G73B9S9J8QUX"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "KeyPairName",
