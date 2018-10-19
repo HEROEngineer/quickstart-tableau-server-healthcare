@@ -9,7 +9,7 @@
     },
     {
         "ParameterKey": "AWSPublicFQDN",
-        "ParameterValue": "tableau-ubuntu.ajfriedm.andglenn.lab.myinstance.com"
+        "ParameterValue": "tableau-ubuntu.t.quickstart.awspartner.com"
     },
     {
         "ParameterKey": "AcceptEULA",
@@ -33,7 +33,7 @@
     },
     {
         "ParameterKey": "Password",
-        "ParameterValue": "F0cz2o9fe6!"
+        "ParameterValue": "$[taskcat_genpass_12]"
     },
     {
         "ParameterKey": "Username",
@@ -105,7 +105,7 @@
     },
     {
         "ParameterKey": "TableauServerAdminPassword",
-        "ParameterValue": "test1234"
+        "ParameterValue": "$[taskcat_genpass_12]"
     },
     {
         "ParameterKey": "TableauServerLicenseKey",
