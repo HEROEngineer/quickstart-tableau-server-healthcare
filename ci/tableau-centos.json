@@ -9,7 +9,7 @@
     },
     {
         "ParameterKey": "AWSPublicFQDN",
-        "ParameterValue": "tableau-centos.ajfriedm.andglenn.lab.myinstance.com"
+        "ParameterValue": "tableau-centos.t.quickstart.awspartner.com"
     },
     {
         "ParameterKey": "AcceptEULA",
@@ -29,7 +29,7 @@
     },
     {
         "ParameterKey": "Password",
-        "ParameterValue": "F0cz2o9fe6!"
+        "ParameterValue": "$[taskcat_genpass_12]"
     },
     {
         "ParameterKey": "Username",
@@ -101,7 +101,7 @@
     },
     {
         "ParameterKey": "TableauServerAdminPassword",
-        "ParameterValue": "test1234"
+        "ParameterValue": "$[taskcat_genpass_12]"
     },
     {
         "ParameterKey": "TableauServerLicenseKey",

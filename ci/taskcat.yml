@@ -1,0 +1,32 @@
+global:
+  marketplace-ami: false
+  owner: quickstart-eng@amazon.com
+  qsname: quickstart-tableau-server-healthcare
+  regions:
+    - us-east-1
+    - us-east-2
+    - us-west-1
+    - us-west-2
+  reporting: true
+ 
+tests:
+  quickstart-tableau-server-healthcaret-centos:
+    parameter_input: tableau-centos.json
+    template_file: tableau-server-master.yaml
+    regions:
+      - us-east-1
+  quickstart-tableau-server-healthcaret-windows:
+    parameter_input: tableau-windows.json
+    template_file: tableau-server-master.yaml
+    regions:
+      - us-east-2
+  quickstart-tableau-server-healthcaret-alinux:
+    parameter_input: tableau-amazonlinux.json
+    template_file: tableau-server-master.yaml
+    regions:
+      - us-west-1
+  quickstart-tableau-server-healthcare-ubuntu:
+    parameter_input: tableau-ubuntu.json
+    template_file: tableau-server-master.yaml
+    regions:
+      - us-west-2
