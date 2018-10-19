@@ -131,10 +131,6 @@ Resources:
       - arn:aws:iam::aws:policy/service-role/AWSConfigRulesExecutionRole
       - arn:aws:iam::aws:policy/service-role/AWSConfigRole
 
-  ConfigSNS:
-    Type: AWS::SNS::Topic
-    Condition: CreateConfig
-
   ConfigRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -145,7 +141,7 @@ Resources:
         - Effect: Allow
           Action:
           - s3:PutObject
-          Resource: !Sub arn:aws:s3:::${LogBucket}/*
+          Resource: !Sub arn:aws:s3:::${LogBucket}/config*
           Condition:
             StringLike:
               s3:x-amz-acl: bucket-owner-full-control
@@ -157,8 +153,33 @@ Resources:
           Action:
           - "config:Put*"
           Resource: "*"
+        - Effect: Allow
+          Action:
+          - SNS:Publish
+          Resource: "*"
       Roles:
       - !Ref ConfigRole
+
+  ConfigSNS:
+    Type: AWS::SNS::Topic
+    Condition: CreateConfig
+    
+  ConfigSNSPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Condition: CreateConfig
+    DependsOn: ConfigSNS
+    Properties:
+      PolicyDocument:
+        Id: ConfigSNSPolicy
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: [ !GetAtt ConfigRole.Arn ]
+          Action: SNS:Publish
+          Resource: !Ref ConfigSNS
+      Topics:
+      - !Ref ConfigSNS
 
   ConfigRecorder:
     Type: AWS::Config::ConfigurationRecorder

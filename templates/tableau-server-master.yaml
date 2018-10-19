@@ -359,6 +359,8 @@ Resources:
         AWSHostedZoneID: !Ref AWSHostedZoneID
         AWSPublicFQDN: !Ref AWSPublicFQDN
         AcceptEULA: !Ref AcceptEULA
+        ConfigRecorder: !Ref ConfigRecorder
+        ConfigDeliveryChannel: !Ref ConfigDeliveryChannel
         InstanceType: !Ref InstanceType
         KeyPairName: !Ref KeyPairName
         Password: !Ref Password
