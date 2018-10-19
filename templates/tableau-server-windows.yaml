@@ -116,6 +116,9 @@ Parameters:
   QSTagValue:
     Type: String
     Description: Tag value to identify resources from this Quick Start
+  TableauServerInstanceProfile:
+    Type: String
+    Description: Tableau Server Instance Role. Used for tagging EBS volumes
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -203,7 +206,7 @@ Mappings:
   DefaultConfiguration:
     InstallationConfig:
       InstallationBucket: tableau-healthcare-quickstart
-      InstallationExecutable: Tableau-Server-2018.2-Beta2-x64.exe
+      InstallationExecutable: TableauServer-64bit-2018-2-2.exe
     MachineConfiguration:
       SystemVolumeSize: 50
       DataVolumeSize: 100
@@ -287,8 +290,23 @@ Resources:
                   },
                   "topologyVersion": {}
                 }
-            c:\tabsetup\python-3.6.4-amd64.exe:
-              source: https://www.python.org/ftp/python/3.6.4/python-3.6.4-amd64.exe
+            c:\tabsetup\python-install.exe:
+              source: https://www.python.org/ftp/python/3.6.6/python-3.6.6-amd64.exe
+            c:\tabsetup\tag_ebs_volumes.py:
+              content: !Sub | 
+                import urllib.request
+                import boto3
+
+                ec2 = boto3.client('ec2', region_name='${AWS::Region}')
+                def main():
+                  instance_id = urllib.request.urlopen('http://169.254.169.254/latest/meta-data/instance-id').read().decode()
+                  volumes = [ _['VolumeId'] for _ in ec2.describe_volumes(
+                    Filters = [{'Name':'attachment.instance-id','Values':[instance_id]}])['Volumes'] ]
+                
+                  tag_response = ec2.create_tags(Resources=volumes, Tags=[{'Key': '${QSTagKey}', 'Value':'${QSTagValue}'}])
+                
+                if __name__ == "__main__":
+                  main()
             c:\tabsetup\enable_ssl.py:
               content: !Sub |
                 import os
@@ -395,18 +413,26 @@ Resources:
               cwd: c:\Windows\System32
               command: netsh advfirewall set allprofiles state off
             01-install-python:
-              command: c:\tabsetup\python-3.6.4-amd64.exe /quiet InstallAllUsers=1 PrependPath=1
+              command: c:\tabsetup\python-install.exe /quiet InstallAllUsers=1 PrependPath=1
               cwd: c:\tabsetup
               waitAfterCompletion: 0
-            02-create-user:
+            02-install-awscli:
+              command: '"C:\Program Files\Python36\Scripts\pip.exe" install awscli boto3'
+              cwd: c:\tabsetup
+              waitAfterCompletion: 0
+            03-tag-instance:
+              command: '"C:\Program Files\Python36\python.exe" tag_ebs_volumes.py 1> c:\tabsetup\tag-volumes-output.txt 2>&1'
+              cwd: c:\tabsetup
+              waitAfterCompletion: 0
+            03-create-user:
               command: !Sub net user ${Username} ${Password} /add /y
               cwd: c:\tabsetup
               waitAfterCompletion: 0
-            03-add-admin:
+            04-add-admin:
               command: !Sub net localgroup Administrators ${Username} /add /y
               cwd: c:\tabsetup
               waitAfterCompletion: 0
-            04-run-installer:
+            05-run-installer:
               cwd: c:\tabsetup
               command: '"C:\Program Files\Python36\python.exe" SilentInstaller.py install --secretsFile c:\tabsetup\secrets.json --registrationFile c:\tabsetup\registration.json --configFile c:\tabsetup\config.json --installDir d:\tableau --dataDir d:\tableau c:\tabsetup\tableau-server-webapp-installer.exe 1> c:\tabsetup\tsm_installer-output.txt 2>&1'
               waitAfterCompletion: 0
@@ -432,6 +458,7 @@ Resources:
           VolumeType: gp2
       ImageId: !Ref ImageId
       InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref TableauServerInstanceProfile
       KeyName: !Ref KeyPairName
       SecurityGroups:
       - !Ref InstanceSecurityGroup
