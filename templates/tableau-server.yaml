@@ -609,67 +609,6 @@ Resources:
         TableauServerAdminPassword: !Ref TableauServerAdminPassword
         TableauServerLicenseKey: !Ref TableauServerLicenseKey
         Username: !Ref Username
- 
-  # Clean up resources
-  CleanupRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
-      Policies:
-      - PolicyName: ConfigPolicy
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-          - Sid: Logging
-            Effect: Allow
-            Action: logs:*
-            Resource: '*'
-          - Sid: S3Bucket
-            Effect: Allow
-            Action: s3:*
-            Resource: 
-              Fn::If: 
-              - NoSSLCertificate
-              - - !Sub arn:aws:s3:::${LogStack.Outputs.LogBucket}
-                - !Sub arn:aws:s3:::${ElbStack.Outputs.LambdaZipsBucket}
-              - - !Sub arn:aws:s3:::${LogStack.Outputs.LogBucket}
-          - Sid: S3Object
-            Effect: Allow
-            Action: s3:*
-            Resource: 
-              Fn::If: 
-              - NoSSLCertificate
-              - - !Sub arn:aws:s3:::${LogStack.Outputs.LogBucket}/*
-                - !Sub arn:aws:s3:::${ElbStack.Outputs.LambdaZipsBucket}/*
-              - - !Sub arn:aws:s3:::${LogStack.Outputs.LogBucket}/*
-
-  # Cleanup Buckets
-  CleanupLogBucket:
-    Type: AWS::CloudFormation::Stack
-    DependsOn: 
-    - CleanupRole
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/clean-bucket.yaml
-      Parameters:
-        Bucket: !GetAtt LogStack.Outputs.LogBucket
-        ServiceToken: !GetAtt CleanupRole.Arn
-  CleanupLambdaZipsBucket:
-    Type: AWS::CloudFormation::Stack
-    DependsOn: 
-    - CleanupRole
-    Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/clean-bucket.yaml
-      Parameters:
-        Bucket: !GetAtt LogStack.Outputs.LogBucket
-        ServiceToken: !GetAtt CleanupRole.Arn
-
 
 Outputs:
   ElbDns:

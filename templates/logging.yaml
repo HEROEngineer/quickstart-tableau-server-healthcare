@@ -89,6 +89,7 @@ Resources:
         Status: Enabled
       
   LogBucketPolicy:
+    DependsOn: CleanupLogBucket
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref LogBucket
@@ -113,6 +114,43 @@ Resources:
             - !FindInMap [ ElbLogging, !Ref "AWS::Region" , Principal ]
           Action: "s3:PutObject"
           Resource: !Sub arn:aws:s3:::${LogBucket}/*
+
+  CleanupLogBucket:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - CleanupRole
+    Properties:
+      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/clean-bucket.yaml
+      Parameters:
+        Bucket: !Ref LogBucket
+        ServiceToken: !GetAtt CleanupRole.Arn
+
+  CleanupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: ConfigPolicy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Sid: Logging
+            Effect: Allow
+            Action: logs:*
+            Resource: '*'
+          - Sid: S3Bucket
+            Effect: Allow
+            Action: s3:*
+            Resource:
+            - !GetAtt LogBucket.Arn
+            - !Sub arn:aws:s3:::${LogBucket}/*
 
   # ConfigRole
   ConfigRole:
