@@ -614,9 +614,15 @@ Resources:
         Username: !Ref Username
 
 Outputs:
-  ElbDns:
+  LoadBalancerDNSName:
     Value: !GetAtt ElbStack.Outputs.ElbDns
+    Description: DNS Name for the load balancer
   RecordSet: 
     Value: !GetAtt ElbStack.Outputs.RecordSet
     Description: Domain Name of the Record Set
-  
+  TableauServerURL:
+    Description: Public DNS name to reach cluster
+    Value: !Sub https://${AWSPublicFQDN}
+  TSMUrl:
+    Description: URL to access TSM GUI. Accessible via Bastion Host
+    Value: !Sub https://${AWSPublicFQDN}:8850
