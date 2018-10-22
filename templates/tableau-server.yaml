@@ -68,7 +68,7 @@ Metadata:
       ConfigRecorder:
         default: AWS Config Recorder ARN
       ConfigDeliveryChannel:
-        defualt: AWS Config Delivery Channel ARN
+        default: AWS Config Delivery Channel ARN
       InstanceType:
         default: Tableau Server instance type
       KeyPairName:

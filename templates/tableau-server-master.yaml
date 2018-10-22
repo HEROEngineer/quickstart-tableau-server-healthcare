@@ -44,6 +44,8 @@ Metadata:
       - Password
       - TableauServerAdminUser
       - TableauServerAdminPassword
+      - WindowsBastionAdmin
+      - WindowsBastionPwd
     - Label:
         default: Registration
       Parameters:
@@ -82,7 +84,7 @@ Metadata:
       ConfigRecorder:
         default: AWS Config Recorder ARN
       ConfigDeliveryChannel:
-        defualt: AWS Config Delivery Channel ARN
+        default: AWS Config Delivery Channel ARN
       InstanceType:
         default: Tableau Server instance type
       KeyPairName:
@@ -129,6 +131,10 @@ Metadata:
         default: Tableau Activation Key
       Username:
         default: Tableau Services Manager (TSM) administrator username
+      WindowsBastionAdmin:
+        default: Windows Bastion admin username
+      WindowsBastionPwd:
+        default: Windows Bastion admin password
 Parameters:
   AMIOS:
     AllowedValues:
@@ -285,13 +291,13 @@ Parameters:
     Description: The CIDR address from which you will remote into the instance
     Type: String
   WindowsBastionPwd:
-    Description: Password for the administrative account. Must be at least 8 characters containing letters, numbers and symbols. If using Windows, min length should be 8.
+    Description: '[Optional] Used only for Windows bastion host. Password for the administrative account. Must be at least 8 characters containing letters, numbers and symbols. If using Windows, min length should be 8.'
     Type: String
     Default: ""
     MaxLength: 32
     NoEcho: true
   WindowsBastionAdmin:
-    Description: User name for the new local administrator account. If you are using Windows, min length should be 5.
+    Description: '[Optional] Used only for Windows bastion host. User name for the new local administrator account. If you are using Windows, min length should be 5.'
     Type: String
     Default: ""
     MaxLength: 25
