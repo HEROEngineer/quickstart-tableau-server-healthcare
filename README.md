@@ -1,7 +1,7 @@
 # quickstart-tableau-server-healthcare
 ## Tableau Server for Healthcare on the AWS Cloud
 
-**Important note** You must have an AWS Business Associate Addendum (BAA) in place, and follow its configuration requirements, before running protected health information (PHI) workloads on AWS. For details, see the ![deployment guide](https://fwd.aws/bBJnv).
+**Important note:** You must have an AWS Business Associate Addendum (BAA) in place, and follow its configuration requirements, before running protected health information (PHI) workloads on AWS. For details, see the ![deployment guide](https://fwd.aws/bBJnv).
 
 This Quick Start helps you deploy a Tableau Server standalone environment on the AWS Cloud, following best practices from AWS and Tableau Software. Specifically, this environment can help organizations with workloads that fall within the scope of the U.S. Health Insurance Portability and Accountability Act (HIPAA). The Quick Start addresses certain technical requirements in the Privacy, Security, and Breach Notification Rules under the HIPAA Administrative Simplification Regulations (45 C.F.R. Parts 160 and 164). 
 
