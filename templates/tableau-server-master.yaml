@@ -374,7 +374,7 @@ Resources:
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSTagKey: !FindInMap [ DefaultConfiguration, QuickStartTag, Key ]
-        QSTagValue: !Join [ '-', [ !FindInMap [ DefaultConfiguration, QuickStartTag, Value ], !Ref "AWS::StackName"]]
+        QSTagValue: !FindInMap [ DefaultConfiguration, QuickStartTag, Value ]
         PrivateSubnetIds: !Sub "${VPCStack.Outputs.PrivateSubnet1AID},${VPCStack.Outputs.PrivateSubnet2AID}"
         PublicSubnetIds: !Sub "${VPCStack.Outputs.PublicSubnet1ID},${VPCStack.Outputs.PublicSubnet2ID}"
         BastionSecurityGroup: !GetAtt BastionStack.Outputs.BastionSecurityGroupID

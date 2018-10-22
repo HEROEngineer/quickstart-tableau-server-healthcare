@@ -216,9 +216,11 @@ Parameters:
   QSTagKey:
     Type: String
     Description: Tag key to identify resources from this Quick Start.
+    Default: QuickStartID
   QSTagValue:
     Type: String
     Description: Tag value to identify resources from this Quick Start.
+    Default: TableauServerHealthcare
   RegCity:
     Description: City
     MinLength: 1
@@ -409,7 +411,7 @@ Resources:
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSTagKey: !Ref QSTagKey
-        QSTagValue: !Ref QSTagValue
+        QSTagValue: !Sub ${QSTagValue}-${AWS::StackName}
 
   # Create the ELB
   ElbStack:
@@ -425,7 +427,7 @@ Resources:
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSTagKey: !Ref QSTagKey
-        QSTagValue: !Ref QSTagValue
+        QSTagValue: !Sub ${QSTagValue}-${AWS::StackName}
         SourceCIDR: !Ref SourceCIDR
         SSLCertificateARN: !Ref SSLCertificateARN
         VpcCidr: !Ref VpcCidr
@@ -444,7 +446,7 @@ Resources:
         AmiRegion: !Ref "AWS::Region"
         SubnetId: !Select [ 0, !Ref PrivateSubnetIds ]
         QSTagKey: !Ref QSTagKey
-        QSTagValue: !Ref QSTagValue
+        QSTagValue: !Sub ${QSTagValue}-${AWS::StackName}
 
   # Configure Instance Security Group
   InstanceSecurityGroup:
@@ -466,7 +468,7 @@ Resources:
         SourceSecurityGroupId: !GetAtt ElbStack.Outputs.ElbSecurityGroup
       Tags:
       - Key: !Ref QSTagKey
-        Value: !Ref QSTagValue
+        Value: !Sub ${QSTagValue}-${AWS::StackName}
       VpcId: !Ref VpcId
 
   TableauServerInstanceRole:
@@ -529,7 +531,7 @@ Resources:
         RegTitle: !Ref RegTitle
         RegZip: !Ref RegZip
         QSTagKey: !Ref QSTagKey
-        QSTagValue: !Ref QSTagValue
+        QSTagValue: !Sub ${QSTagValue}-${AWS::StackName}
         TableauServerAdminUser: !Ref TableauServerAdminUser
         TableauServerAdminPassword: !Ref TableauServerAdminPassword
         TableauServerLicenseKey: !Ref TableauServerLicenseKey
@@ -566,7 +568,7 @@ Resources:
         RegTitle: !Ref RegTitle
         RegZip: !Ref RegZip
         QSTagKey: !Ref QSTagKey
-        QSTagValue: !Ref QSTagValue
+        QSTagValue: !Sub ${QSTagValue}-${AWS::StackName}
         TableauServerAdminUser: !Ref TableauServerAdminUser
         TableauServerAdminPassword: !Ref TableauServerAdminPassword
         TableauServerLicenseKey: !Ref TableauServerLicenseKey
@@ -604,7 +606,7 @@ Resources:
         RegTitle: !Ref RegTitle
         RegZip: !Ref RegZip
         QSTagKey: !Ref QSTagKey
-        QSTagValue: !Ref QSTagValue
+        QSTagValue: !Sub ${QSTagValue}-${AWS::StackName}
         TableauServerAdminUser: !Ref TableauServerAdminUser
         TableauServerAdminPassword: !Ref TableauServerAdminPassword
         TableauServerLicenseKey: !Ref TableauServerLicenseKey
