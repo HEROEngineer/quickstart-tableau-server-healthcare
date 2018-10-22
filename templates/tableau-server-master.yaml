@@ -68,6 +68,8 @@ Metadata:
       Parameters:
       - QSS3BucketName
       - QSS3KeyPrefix
+      - QSTagKey
+      - QSTagValue
     ParameterLabels:
       AMIOS:
         default: AMI Operating System
@@ -95,6 +97,10 @@ Metadata:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
+      QSTagKey:
+        default: Quick Start Tag key
+      QSTagValue:
+        default: Quick Start Tag value
       RegCity:
         default: City
       RegCompany:
@@ -212,6 +218,14 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
     Type: String
+  QSTagKey:
+    Type: String
+    Description: Tag key to identify resources from this Quick Start.
+    Default: QuickStartID
+  QSTagValue:
+    Type: String
+    Description: Tag value to identify resources from this Quick Start.
+    Default: TableauServerHealthcare
   RegCity:
     Description: City
     MinLength: 1
@@ -313,9 +327,6 @@ Mappings:
       PrivateSubnet1CIDR: 10.0.2.0/24
       PublicSubnet2CIDR: 10.0.3.0/24
       PrivateSubnet2CIDR: 10.0.4.0/24
-    QuickStartTag:
-      Key: QuickStartID
-      Value: TableauServerHealthcare
 Conditions:
   IsWindows: !Equals [ !Ref AMIOS, Windows-Server-2012-R2 ]
   IsLinux: !Not [ Condition: IsWindows ]
@@ -333,8 +344,8 @@ Resources:
         PrivateSubnet2ACIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PrivateSubnet2CIDR ]
         PublicSubnet1CIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PublicSubnet1CIDR ]
         PublicSubnet2CIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, PublicSubnet2CIDR ]
-        PublicSubnetTag2: !Join [ "=", [ !FindInMap [ DefaultConfiguration, QuickStartTag, Key ], !Join [ '-', [ !FindInMap [ DefaultConfiguration, QuickStartTag, Value ], !Ref "AWS::StackName"]]]]
-        PrivateSubnetATag2: !Join [ "=", [ !FindInMap [ DefaultConfiguration, QuickStartTag, Key ], !Join [ '-', [ !FindInMap [ DefaultConfiguration, QuickStartTag, Value ], !Ref "AWS::StackName"]]]]
+        PublicSubnetTag2: !Join [ "=", [ !Ref QSTagKey, !Join [ '-', [ !Ref QSTagValue, !Ref "AWS::StackName"]]]]
+        PrivateSubnetATag2: !Join [ "=", [ !Ref QSTagKey, !Join [ '-', [ !Ref QSTagValue, !Ref "AWS::StackName"]]]]
         VPCCIDR: !FindInMap [ DefaultConfiguration, NetworkConfiguration, VPCCIDR ]
 
   BastionStack:
@@ -374,8 +385,8 @@ Resources:
         Password: !Ref Password
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
-        QSTagKey: !FindInMap [ DefaultConfiguration, QuickStartTag, Key ]
-        QSTagValue: !FindInMap [ DefaultConfiguration, QuickStartTag, Value ]
+        QSTagKey: !Ref QSTagKey
+        QSTagValue: !Ref QSTagValue
         PrivateSubnetIds: !Sub "${VPCStack.Outputs.PrivateSubnet1AID},${VPCStack.Outputs.PrivateSubnet2AID}"
         PublicSubnetIds: !Sub "${VPCStack.Outputs.PublicSubnet1ID},${VPCStack.Outputs.PublicSubnet2ID}"
         BastionSecurityGroup: !GetAtt BastionStack.Outputs.BastionSecurityGroupID
