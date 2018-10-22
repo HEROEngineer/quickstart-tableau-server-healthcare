@@ -162,7 +162,7 @@ Parameters:
     AllowedValues:
     - 'Yes'
     - 'No'
-    Default: 'Yes'
+    Default: 'No'
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
   AvailabilityZones:

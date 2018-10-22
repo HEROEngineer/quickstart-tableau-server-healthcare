@@ -145,7 +145,7 @@ Parameters:
     Description: Tableau Server portal will be reachable at this address.
     Type: String
   AcceptEULA:
-    AllowedPattern: 'Yes'
+    AllowedPattern: 'No'
     AllowedValues:
     - 'Yes'
     - 'No'
