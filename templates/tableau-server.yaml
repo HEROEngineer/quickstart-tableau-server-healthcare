@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "AWS CloudFormation Template: Deploys infrastructure for Tableau Server"
+Description: "AWS CloudFormation Template: Deploys infrastructure for Tableau Server. (qs-1oui27s1g)"
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:

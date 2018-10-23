@@ -16,7 +16,7 @@
 #     - tableau linux
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Tableau Server Single Node (Windows, Ubuntu, Amazon Linux 2, CentOS) configured for healthcare
+Description: 'Tableau Server Single Node (Windows, Ubuntu, Amazon Linux 2, CentOS) configured for healthcare. (qs-1oui27s1b)'
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:

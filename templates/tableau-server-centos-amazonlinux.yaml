@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'AWS CloudFormation Template: Tableau Server running on Linux (Centos and Amazon Linux).'
+Description: 'AWS CloudFormation Template: Tableau Server running on Linux (Centos and Amazon Linux). (qs-1oui27s1l)'
 
 Parameters:
   AMIOS:
