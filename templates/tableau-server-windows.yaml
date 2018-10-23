@@ -3,10 +3,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: CloudFormation Template for TSM-based Tableau Server on Windows
 Parameters:
   AcceptEULA:
-    AllowedPattern: 'Yes'
     AllowedValues:
     - 'Yes'
     - 'No'
+    Default: 'No'
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
   InstanceType:

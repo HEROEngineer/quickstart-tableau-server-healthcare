@@ -11,10 +11,10 @@ Parameters:
     Description: The Linux or Windows distribution for the AMI to be used for the EC2 instances
     Type: String
   AcceptEULA:
-    AllowedPattern: 'Yes'
     AllowedValues:
     - 'Yes'
     - 'No'
+    Default: 'No'
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
   InstanceType:

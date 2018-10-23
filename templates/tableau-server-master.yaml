@@ -158,7 +158,6 @@ Parameters:
     Description: Tableau Server portal will be reachable at this address.
     Type: String
   AcceptEULA:
-    AllowedPattern: 'Yes'
     AllowedValues:
     - 'Yes'
     - 'No'
@@ -316,7 +315,14 @@ Parameters:
     Type: String
     Default: ""
     MaxLength: 25
-    
+
+Rules:
+  AcceptEULARule:
+    Assertions:
+    - Assert:
+        !Equals ['Yes', !Ref AcceptEULA]
+      AssertDescription: 'User must agree to Tableau Software EULA which can be viewed at the link: https://www.tableau.com/eula'
+
 Mappings:
   DefaultConfiguration:
     MachineConfiguration:

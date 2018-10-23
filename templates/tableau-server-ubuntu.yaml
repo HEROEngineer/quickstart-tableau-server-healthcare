@@ -3,10 +3,10 @@ Description: 'AWS CloudFormation Template: Tableau Server running on Linux (Ubun
 
 Parameters:
   AcceptEULA:
-    AllowedPattern: 'Yes'
     AllowedValues:
     - 'Yes'
     - 'No'
+    Default: 'No'
     Description: 'View the EULA at the Link: https://www.tableau.com/eula'
     Type: String
   InstanceType:
