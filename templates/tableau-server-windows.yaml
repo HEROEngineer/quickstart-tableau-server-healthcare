@@ -259,7 +259,7 @@ Resources:
                   "first_name": "${RegFirstName}",
                   "last_name": "${RegLastName}",
                   "email": "${RegEmail}",
-                  "company": "${RegCompany};AWSQuickStart-WinBeta",
+                  "company": "${RegCompany};AWSQuickStart-WinHealthcare",
                   "title": "${RegTitle}",
                   "department": "${RegDepartment}",
                   "industry": "${RegIndustry}",

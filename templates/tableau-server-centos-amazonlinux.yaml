@@ -198,7 +198,7 @@ Resources:
                   "first_name": "${RegFirstName}",
                   "last_name": "${RegLastName}",
                   "email": "${RegEmail}",
-                  "company": "${RegCompany};AWSQuickStart-Linux",
+                  "company": "${RegCompany};AWSQuickStart-LinuxHealthcare",
                   "title": "${RegTitle}",
                   "department": "${RegDepartment}",
                   "industry": "${RegIndustry}",
