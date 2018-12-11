@@ -314,7 +314,9 @@ Parameters:
     Description: '[Optional] Used only for Windows bastion host. User name for the new local administrator account. If you are using Windows, min length should be 5.'
     Type: String
     Default: ""
+    MinLength: 5
     MaxLength: 25
+    AllowedPattern: "[a-zA-Z0-9]*"
 
 Rules:
   AcceptEULARule:
