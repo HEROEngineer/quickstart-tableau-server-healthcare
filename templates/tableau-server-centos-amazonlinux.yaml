@@ -121,7 +121,7 @@ Parameters:
 Mappings:
   DefaultConfiguration:
     InstallationConfig:
-      TableauServerInstaller: https://s3-us-west-2.amazonaws.com/tableau-healthcare-quickstart/tableau-server-2018-2-2.x86_64.rpm
+      TableauServerInstaller: https://s3-us-west-2.amazonaws.com/tableau-healthcare-quickstart/tableau-server.x86_64.rpm
       AutomatedInstaller: https://s3-us-west-2.amazonaws.com/tableau-healthcare-quickstart/automated-installer.sh
     MachineConfiguration:
       SystemVolumeSize: 100
