@@ -206,7 +206,7 @@ Mappings:
   DefaultConfiguration:
     InstallationConfig:
       InstallationBucket: tableau-healthcare-quickstart
-      InstallationExecutable: TableauServer-64bit-2018-2-2.exe
+      InstallationExecutable: TableauServer-64bit.exe
     MachineConfiguration:
       SystemVolumeSize: 50
       DataVolumeSize: 100
