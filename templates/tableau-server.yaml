@@ -315,79 +315,79 @@ Mappings:
       WS2012R2: Windows_Server-2012-R2_RTM-English-64Bit-Base-2019.02.13
       ALINUX2: Amazon-Linux-2 LTS amzn2-ami-hvm-2.0.20180924-x86_64-gp2 
     ap-northeast-1:
-      CENTOS7HVM: ami-8e8847f1
-      US1604HVM: ami-06c43a7df16e8213c
-      WS2012R2: ami-0d99aa7f0403a9ba4
+      CENTOS7HVM: ami-0a7d05cbf0b747899
+      US1604HVM: ami-096c57cee908da809
+      WS2012R2: ami-08c9069ebb691abd4
       ALINUX2: ami-06962fe7164c1fe7b
     ap-northeast-2:
-      CENTOS7HVM: ami-bf9c36d1
-      US1604HVM: ami-0e0f4ff1154834540
-      WS2012R2: ami-0163c75ba997507aa
+      CENTOS7HVM: ami-0d95ea061eb3e3af2
+      US1604HVM: ami-0a25005e83c56767a
+      WS2012R2: ami-0ffe7109456576e22
       ALINUX2: ami-02e495c61af26da99
     ap-south-1:
-      CENTOS7HVM: ami-1780a878
-      US1604HVM: ami-04ea996e7a3e7ad6b
-      WS2012R2: ami-0437fea2a5ba5aacd
+      CENTOS7HVM: ami-0107ef36b4fa42898
+      US1604HVM: ami-03dcedc81ea3e7e27
+      WS2012R2: ami-03d1bbb0fb080106a
       ALINUX2: ami-0b173ae0d9e71699a
     ap-southeast-1:
-      CENTOS7HVM: ami-8e0205f2
-      US1604HVM: ami-0eb1f21bbd66347fe
-      WS2012R2: ami-00230cfcbc0180362
+      CENTOS7HVM: ami-0183fd284787bb585
+      US1604HVM: ami-04613ff1fdcd2eab1
+      WS2012R2: ami-069532b1546ad2d5b
       ALINUX2: ami-0f67499750e64577a
     ap-southeast-2:
-      CENTOS7HVM: ami-d8c21dba
-      US1604HVM: ami-0789a5fb42dcccc10
-      WS2012R2: ami-0f66d840816e8a35f
+      CENTOS7HVM: ami-0777c25253de28c0e
+      US1604HVM: ami-000c2343cf03d7fd7
+      WS2012R2: ami-0ea835af31584b7a9
       ALINUX2: ami-0e2b2114bf2fac7d8
     ca-central-1:
-      CENTOS7HVM: ami-e802818c
-      US1604HVM: ami-0f2cb2729acf8f494
-      WS2012R2: ami-051f75c651d856381
+      CENTOS7HVM: ami-0c2178b2a49bf0ffe
+      US1604HVM: ami-0eb3e12d3927c36ef
+      WS2012R2: ami-023d5d0bf968b6b8d
       ALINUX2: ami-0c612fea430136cb0
     eu-central-1:
-      CENTOS7HVM: ami-dd3c0f36
-      US1604HVM: ami-086a09d5b9fa35dc7
-      WS2012R2: ami-0ece2db131cd3c16a
+      CENTOS7HVM: ami-08ee2037f6ff4c4f8
+      US1604HVM: ami-0085d4f8878cddc81
+      WS2012R2: ami-0e4465bd84605ed60
       ALINUX2: ami-0e82b8b6afa30f2cd
     eu-west-1:
-      CENTOS7HVM: ami-3548444c
-      US1604HVM: ami-0773391ae604c49a4
-      WS2012R2: ami-009af7c43be38087d
+      CENTOS7HVM: ami-052a73ca1503f9659
+      US1604HVM: ami-03746875d916becc0
+      WS2012R2: ami-0a3b775d0b1587522
       ALINUX2: ami-0eafb5ee12a2cbffc
     eu-west-2:
-      CENTOS7HVM: ami-00846a67
-      US1604HVM: ami-061a2d878e5754b62
-      WS2012R2: ami-025fc1fa28fdf1a87
+      CENTOS7HVM: ami-01e754e81f5d9cf72
+      US1604HVM: ami-0cbe2951c7cd54704
+      WS2012R2: ami-085fc413f85df3839
       ALINUX2: ami-0135b45434a538069
     eu-west-3:
-      CENTOS7HVM: ami-262e9f5b
-      US1604HVM: ami-075b44448d2276521
-      WS2012R2: ami-0cbc109ce3fe6584e
+      CENTOS7HVM: ami-0babed2e514cff4f8
+      US1604HVM: ami-080d4d4c37b0aa206
+      WS2012R2: ami-010fe7fe27659a8a2
       ALINUX2: ami-07e5d89c9e173f360
     sa-east-1:
-      CENTOS7HVM: ami-cb5803a7
-      US1604HVM: ami-0318cb6e2f90d688b
-      WS2012R2: ami-0f7eee4d47377680e
+      CENTOS7HVM: ami-0e94806bd2a350945
+      US1604HVM: ami-09beb384ba644b754
+      WS2012R2: ami-039a1df2bc73444c8
       ALINUX2: ami-0e4c9b46b89ddd90c
     us-east-1:
-      CENTOS7HVM: ami-9887c6e7
-      US1604HVM: ami-059eeca93cf09eebd
-      WS2012R2: ami-066663db63b3aa675
+      CENTOS7HVM: ami-089ccd342f0be98ab
+      US1604HVM: ami-0cfee17793b08a293
+      WS2012R2: ami-0daee40e15682f8fa
       ALINUX2: ami-0e6d2e8684d4ccb3e
     us-east-2:
-      CENTOS7HVM: ami-9c0638f9
-      US1604HVM: ami-0782e9ee97725263d
-      WS2012R2: ami-00890851afd74dda3
+      CENTOS7HVM: ami-0813f56b578baedb1
+      US1604HVM: ami-0f93b5fd8f220e428
+      WS2012R2: ami-05cc7c0efc5469642
       ALINUX2: ami-0785b10e84f9dbd4f
     us-west-1:
-      CENTOS7HVM: ami-4826c22b
-      US1604HVM: ami-0ad16744583f21877
-      WS2012R2: ami-08462bc4d6a8eb5c1
+      CENTOS7HVM: ami-00c7a73740c25fdfe
+      US1604HVM: ami-09eb5e8a83c7aa890
+      WS2012R2: ami-05dfef67219fd3817
       ALINUX2: ami-01eb1709d6ad69035
     us-west-2:
-      CENTOS7HVM: ami-3ecc8f46
-      US1604HVM: ami-0e32ec5bc225539f5
-      WS2012R2: ami-07c77fe35092981e9
+      CENTOS7HVM: ami-053ceb1ddca82b4ba
+      US1604HVM: ami-0b37e9efc396e4c38
+      WS2012R2: ami-05cf702a535de6430
       ALINUX2: ami-0fcd5791ba781e98f
   AWSAMINameMap:
     CentOS-7-HVM:
