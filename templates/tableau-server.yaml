@@ -382,7 +382,7 @@ Mappings:
     us-west-1:
       CENTOS7HVM: ami-074e2d6769f445be5
       US1604HVM: ami-0dbf5ea29a7fc7e05
-      WS2012R2: ami-05c71b3ca4af2fbee
+      WS2012R2: ami-05cd4c9c42e255074
       ALINUX2: ami-01eb1709d6ad69035
     us-west-2:
       CENTOS7HVM: ami-01ed306a12b7d1c96
