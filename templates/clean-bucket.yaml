@@ -27,7 +27,7 @@ Resources:
           import cfnresponse
           client = boto3.client('s3')
           def delete_NonVersionedobjects(bucket):
-              print("Collecting data from" + bucket)
+              print(("Collecting data from" + bucket))
               paginator = client.get_paginator('list_objects_v2')
               result = paginator.paginate(Bucket=bucket)
               objects = []
@@ -42,7 +42,7 @@ Resources:
                       pass
                       print("bucket is already empty")
           def delete_versionedobjects(bucket):
-              print("Collecting data from" + bucket)
+              print(("Collecting data from" + bucket))
               paginator = client.get_paginator('list_object_versions')
               result = paginator.paginate(Bucket=bucket)
               objects = []
@@ -94,5 +94,5 @@ Resources:
       Description: Empty the S3 Bucket
       Handler: index.handler
       Role: !Ref ServiceToken
-      Runtime: python2.7
+      Runtime: python3.7
       Timeout: 240

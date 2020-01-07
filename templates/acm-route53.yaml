@@ -85,7 +85,7 @@ Resources:
     Properties:
       Description: Creates and verifies an ACM certificate using DNS validation and Route53
       Handler: lambda_function.handler
-      Runtime: python2.7
+      Runtime: python3.7
       Role: !GetAtt ACMCertificateRole.Arn
       Timeout: 300
       Code:
