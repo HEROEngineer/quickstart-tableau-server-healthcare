@@ -13,7 +13,7 @@ logs_client = boto3.client('logs')
 
 
 def handler(event, context):
-    print('Received event: %s' % json.dumps(event))
+    print(('Received event: %s' % json.dumps(event)))
     status = cfnresponse.SUCCESS
     physical_resource_id = None
     data = {}
@@ -51,7 +51,7 @@ def handler(event, context):
                         logging.error('timed out waiting for ResourceRecord')
                         status = cfnresponse.FAILED
                     time.sleep(15)
-            rs = [{'Action': 'CREATE', 'ResourceRecordSet': {'Name': r, 'Type': 'CNAME', 'TTL': 600,'ResourceRecords': [{'Value': rs[r]}]}} for r in rs.keys()]
+            rs = [{'Action': 'CREATE', 'ResourceRecordSet': {'Name': r, 'Type': 'CNAME', 'TTL': 600,'ResourceRecords': [{'Value': rs[r]}]}} for r in list(rs.keys())]
             try:
                 r53_client.change_resource_record_sets(HostedZoneId=event['ResourceProperties']['HostedZoneId'], ChangeBatch={'Changes': rs})
             except Exception as e:
@@ -84,7 +84,7 @@ def handler(event, context):
                 rs={}
                 for d in acm_client.describe_certificate(CertificateArn=physical_resource_id)['Certificate']['DomainValidationOptions']:
                     rs[d['ResourceRecord']['Name']] = d['ResourceRecord']['Value']
-                rs = [{'Action': 'DELETE', 'ResourceRecordSet': {'Name': r, 'Type': 'CNAME', 'TTL': 600,'ResourceRecords': [{'Value': rs[r]}]}} for r in rs.keys()]
+                rs = [{'Action': 'DELETE', 'ResourceRecordSet': {'Name': r, 'Type': 'CNAME', 'TTL': 600,'ResourceRecords': [{'Value': rs[r]}]}} for r in list(rs.keys())]
                 try:
                     r53_client.change_resource_record_sets(HostedZoneId=event['ResourceProperties']['HostedZoneId'], ChangeBatch={'Changes': rs})
                 except r53_client.exceptions.InvalidChangeBatch as e:
