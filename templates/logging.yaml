@@ -22,6 +22,10 @@ Parameters:
       numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
       or end with a hyphen (-).
     Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
+    Type: String
   QSS3KeyPrefix:
     AllowedPattern: "^[0-9a-zA-Z-/]*$"
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
@@ -72,6 +76,7 @@ Mappings:
       Principal: '507241528517'
 
 Conditions:
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   CreateConfig: !And [ !Equals [ !Ref ConfigRecorderName, '' ], !Equals [ !Ref ConfigDeliveryChannelName, '' ] ]
 
 Resources:
@@ -120,7 +125,10 @@ Resources:
     DependsOn:
     - CleanupRole
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/clean-bucket.yaml
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/clean-bucket.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         Bucket: !Ref LogBucket
         ServiceToken: !GetAtt CleanupRole.Arn
@@ -244,7 +252,10 @@ Resources:
     - ConfigRole
     - ConfigRolePolicy
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/config-rules.yaml
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/config-rules.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         ConfigRecorder: !If [ CreateConfig, !Ref ConfigRecorder, !Ref ConfigRecorderName ]
         ConfigDeliveryChannel: !If [ CreateConfig, !Ref ConfigDeliveryChannel, !Ref ConfigDeliveryChannelName ]
