@@ -17,11 +17,12 @@ tests:
       AWSPublicFQDN: tableau-ubuntu.t.quickstart.awspartner.com
       AcceptEULA: 'Yes'
       AvailabilityZones: $[taskcat_genaz_2]
-      BastionAdminCIDR: 0.0.0.0/0
+      BastionAdminCIDR: 10.0.0.0/16
       InstanceType: m5.4xlarge
       KeyPairName: $[taskcat_getkeypair]
       Password: $[taskcat_genpass_12]
       QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
       QSS3KeyPrefix: quickstart-tableau-server-healthcare/
       RegCity: Seattle
       RegCompany: MyCompany
@@ -36,7 +37,7 @@ tests:
       RegTitle: Director
       RegZip: '98101'
       SSLCertificateARN: ''
-      SourceCIDR: 0.0.0.0/0
+      SourceCIDR: 10.0.0.0/16
       TableauServerAdminPassword: $[taskcat_genpass_12]
       TableauServerAdminUser: test
       TableauServerLicenseKey: ''
@@ -52,13 +53,14 @@ tests:
       AWSPublicFQDN: tableau-amazonlinux.t.quickstart.awspartner.com
       AcceptEULA: 'Yes'
       AvailabilityZones: $[taskcat_genaz_2]
-      BastionAdminCIDR: 0.0.0.0/0
+      BastionAdminCIDR: 10.0.0.0/16
       ConfigDeliveryChannel: ''
       ConfigRecorder: ''
       InstanceType: c4.4xlarge
       KeyPairName: $[taskcat_getkeypair]
       Password: $[taskcat_genpass_12]
       QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
       QSS3KeyPrefix: quickstart-tableau-server-healthcare/
       RegCity: Seattle
       RegCompany: MyCompany
@@ -72,7 +74,7 @@ tests:
       RegState: WA
       RegTitle: Director
       RegZip: '98101'
-      SourceCIDR: 0.0.0.0/0
+      SourceCIDR: 10.0.0.0/16
       TableauServerAdminPassword: $[taskcat_genpass_12]
       TableauServerAdminUser: test
       TableauServerLicenseKey: ''
@@ -88,11 +90,12 @@ tests:
       AWSPublicFQDN: tableau-centos.t.quickstart.awspartner.com
       AcceptEULA: 'Yes'
       AvailabilityZones: $[taskcat_genaz_2]
-      BastionAdminCIDR: 0.0.0.0/0
+      BastionAdminCIDR: 10.0.0.0/16
       InstanceType: m5.4xlarge
       KeyPairName: $[taskcat_getkeypair]
       Password: $[taskcat_genpass_12]
       QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
       QSS3KeyPrefix: quickstart-tableau-server-healthcare/
       RegCity: Seattle
       RegCompany: MyCompany
@@ -106,7 +109,7 @@ tests:
       RegState: WA
       RegTitle: Director
       RegZip: '98101'
-      SourceCIDR: 0.0.0.0/0
+      SourceCIDR: 10.0.0.0/16
       TableauServerAdminPassword: $[taskcat_genpass_12]
       TableauServerAdminUser: test
       TableauServerLicenseKey: ''
@@ -122,11 +125,12 @@ tests:
       AWSPublicFQDN: tableau-windows.t.quickstart.awspartner.com
       AcceptEULA: 'Yes'
       AvailabilityZones: $[taskcat_genaz_2]
-      BastionAdminCIDR: 0.0.0.0/0
+      BastionAdminCIDR: 10.0.0.0/16
       InstanceType: m4.4xlarge
       KeyPairName: $[taskcat_getkeypair]
       Password: $[taskcat_genpass_12]
       QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
       QSS3KeyPrefix: quickstart-tableau-server-healthcare/
       RegCity: Seattle
       RegCompany: MyCompany
@@ -140,7 +144,7 @@ tests:
       RegState: WA
       RegTitle: Director
       RegZip: '98101'
-      SourceCIDR: 0.0.0.0/0
+      SourceCIDR: 10.0.0.0/16
       TableauServerAdminPassword: $[taskcat_genpass_12]
       TableauServerAdminUser: test
       TableauServerLicenseKey: ''
