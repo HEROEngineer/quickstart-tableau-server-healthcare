@@ -66,6 +66,10 @@ Parameters:
       numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
       or end with a hyphen (-).
     Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
+    Type: String
   QSS3KeyPrefix:
     AllowedPattern: "^[0-9a-zA-Z-/]*$"
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
@@ -103,6 +107,7 @@ Parameters:
     Type: String
 
 Conditions:
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   IsWindows: !Equals [ !Ref WindowsOrLinux, windows ]
   IsLinux: !Not [ Condition: IsWindows ]
 
@@ -118,6 +123,9 @@ Resources:
         KeyPairName: !Ref KeyPairName
         PublicSubnet1ID: !Ref PublicSubnet1ID
         PublicSubnet2ID: !Ref PublicSubnet2ID
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Sub "${QSS3KeyPrefix}submodules/quickstart-microsoft-rdgateway/"
         RDGWCIDR: !Ref RemoteAccessCIDR
         RDGWInstanceType: !Ref BastionInstanceType
         VPCID: !Ref VPCID
@@ -130,6 +138,9 @@ Resources:
       Parameters:
         BastionInstanceType: !Ref BastionInstanceType
         KeyPairName: !Ref KeyPairName
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Sub "${QSS3KeyPrefix}submodules/quickstart-linux-bastion/"
         RemoteAccessCIDR: !Ref RemoteAccessCIDR
         PublicSubnet1ID: !Ref PublicSubnet1ID
         PublicSubnet2ID: !Ref PublicSubnet2ID

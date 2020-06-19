@@ -51,6 +51,7 @@ Metadata:
           default: AWS Quick Start Configuration
         Parameters:
         - QSS3BucketName
+        - QSS3BucketRegion
         - QSS3KeyPrefix
         - QSTagKey
         - QSTagValue
@@ -81,6 +82,8 @@ Metadata:
         default: Private Subnet IDs in your VPC
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket region
       QSS3KeyPrefix:
         default: Quick Start S3 Key Prefix
       QSTagKey:
@@ -204,6 +207,10 @@ Parameters:
       numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
       or end with a hyphen (-).
     Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
+    Type: String
   QSS3KeyPrefix:
     AllowedPattern: "^[0-9a-zA-Z-/]*$"
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
@@ -313,82 +320,82 @@ Mappings:
       CENTOS7HVM: CentOS Linux 7 x86_64 HVM 1805_01
       US1604HVM: Ubuntu 16.04 LTS HVM 20180912
       WS2012R2: Windows_Server-2012-R2_RTM-English-64Bit-Base-2019.02.13
-      ALINUX2: Amazon-Linux-2 LTS amzn2-ami-hvm-2.0.20180924-x86_64-gp2 
+      AMZNLINUX2: Amazon-Linux-2 LTS amzn2-ami-hvm-2.0.20180924-x86_64-gp2 
     ap-northeast-1:
-      CENTOS7HVM: ami-045f38c93733dd48d
-      US1604HVM: ami-03344c819e1ac354d
-      WS2012R2: ami-06823103be2218b98
-      ALINUX2: ami-06962fe7164c1fe7b
+      CENTOS7HVM: ami-06a46da680048c8ae
+      US1604HVM: ami-078648cce0d33c256
+      WS2012R2: ami-023d0bbec153b3921
+      AMZNLINUX2: ami-0a1c2ec61571737db
     ap-northeast-2:
-      CENTOS7HVM: ami-06cf2a72dadf92410
-      US1604HVM: ami-0c5a717974f63b04c
-      WS2012R2: ami-050e65d9f2ec90145
-      ALINUX2: ami-02e495c61af26da99
+      CENTOS7HVM: ami-06e83aceba2cb0907
+      US1604HVM: ami-0539a1389fedcbdc8
+      WS2012R2: ami-0f9037585d363f83d
+      AMZNLINUX2: ami-01af223aa7f274198
     ap-south-1:
-      CENTOS7HVM: ami-02e60be79e78fef21
-      US1604HVM: ami-0c28d7c6dd94fb3a7
-      WS2012R2: ami-045e1f06f29929467
-      ALINUX2: ami-0b173ae0d9e71699a
+      CENTOS7HVM: ami-026f33d38b6410e30
+      US1604HVM: ami-03b8a287edc0c1253
+      WS2012R2: ami-0e8eda5756f585e23
+      AMZNLINUX2: ami-0447a12f28fddb066
     ap-southeast-1:
-      CENTOS7HVM: ami-0b4dd9d65556cac22
-      US1604HVM: ami-0ca13b3dabeb6c66d
-      WS2012R2: ami-0c322369af7718803
-      ALINUX2: ami-0f67499750e64577a
+      CENTOS7HVM: ami-07f65177cb990d65b
+      US1604HVM: ami-05f112c29645f0812
+      WS2012R2: ami-0cc501d5ad7d2c943
+      AMZNLINUX2: ami-0615132a0f36d24f4
     ap-southeast-2:
-      CENTOS7HVM: ami-08bd00d7713a39e7d
-      US1604HVM: ami-02d7e25c1cfdd5695
-      WS2012R2: ami-0813db0de4ddab990
-      ALINUX2: ami-0e2b2114bf2fac7d8
+      CENTOS7HVM: ami-0b2045146eb00b617
+      US1604HVM: ami-0e4bc04bd401729d6
+      WS2012R2: ami-04a372fb99c40fd88
+      AMZNLINUX2: ami-088ff0e3bde7b3fdf
     ca-central-1:
-      CENTOS7HVM: ami-033e6106180a626d0
-      US1604HVM: ami-0f06e521718460abf
-      WS2012R2: ami-0850dfaa3ee6f6233
-      ALINUX2: ami-0c612fea430136cb0
+      CENTOS7HVM: ami-04a25c39dc7a8aebb
+      US1604HVM: ami-0e2df0719252d4491
+      WS2012R2: ami-0f7c7733ad14b4065
+      AMZNLINUX2: ami-0f75c2980c6a5851d
     eu-central-1:
-      CENTOS7HVM: ami-04cf43aca3e6f3de3
-      US1604HVM: ami-03d8059563982d7b0
-      WS2012R2: ami-024652d0a3df40e74
-      ALINUX2: ami-0e82b8b6afa30f2cd
+      CENTOS7HVM: ami-0e8286b71b81c3cc1
+      US1604HVM: ami-05ed2c1359acd8af6
+      WS2012R2: ami-0051a22d805f0a121
+      AMZNLINUX2: ami-0a02ee601d742e89f
     eu-west-1:
-      CENTOS7HVM: ami-0ff760d16d9497662
-      US1604HVM: ami-0f630a3f40b1eb0b8
-      WS2012R2: ami-0d2f69fcc5f00c97a
-      ALINUX2: ami-0eafb5ee12a2cbffc
+      CENTOS7HVM: ami-0b850cf02cc00fdc8
+      US1604HVM: ami-008320af74136c628
+      WS2012R2: ami-05903fb4660e4b884
+      AMZNLINUX2: ami-0ea3405d2d2522162
     eu-west-2:
-      CENTOS7HVM: ami-0eab3a90fc693af19
-      US1604HVM: ami-0a590332f9f499197
-      WS2012R2: ami-0998a91bb1756752d
-      ALINUX2: ami-0135b45434a538069
+      CENTOS7HVM: ami-09e5afc68eed60ef4
+      US1604HVM: ami-004c1e61ae5d76090
+      WS2012R2: ami-04eb1874f7b7e4725
+      AMZNLINUX2: ami-032598fcc7e9d1c7a
     eu-west-3:
-      CENTOS7HVM: ami-0e1ab783dc9489f34
-      US1604HVM: ami-051ebe9615b416c15
-      WS2012R2: ami-0d6e54e3504cc1615
-      ALINUX2: ami-07e5d89c9e173f360
+      CENTOS7HVM: ami-0cb72d2e599cffbf9
+      US1604HVM: ami-08eebff62e61110b7
+      WS2012R2: ami-0d6114f4fa8b7ddc7
+      AMZNLINUX2: ami-01c72e187b357583b
     sa-east-1:
-      CENTOS7HVM: ami-0b8d86d4bf91850af
-      US1604HVM: ami-0a16d0952a2a7b0ce
-      WS2012R2: ami-044d56b6baa621d7d
-      ALINUX2: ami-0e4c9b46b89ddd90c
+      CENTOS7HVM: ami-0b30f38d939dd4b54
+      US1604HVM: ami-0ddec8b41a3411374
+      WS2012R2: ami-0000e71026bf9df53
+      AMZNLINUX2: ami-0477a95397a9154b3
     us-east-1:
-      CENTOS7HVM: ami-02eac2c0129f6376b
-      US1604HVM: ami-08bc77a2c7eb2b1da
-      WS2012R2: ami-094a644f1fb9e4ce3
-      ALINUX2: ami-0e6d2e8684d4ccb3e
+      CENTOS7HVM: ami-0affd4508a5d2481b
+      US1604HVM: ami-0a0ddd875a1ea2c7f
+      WS2012R2: ami-00360458a879ed9a6
+      AMZNLINUX2: ami-09d95fab7fff3776c
     us-east-2:
-      CENTOS7HVM: ami-0f2b4fc905b0bd1f1
-      US1604HVM: ami-08cec7c429219e339
-      WS2012R2: ami-0a1a54d8690206089
-      ALINUX2: ami-0785b10e84f9dbd4f
+      CENTOS7HVM: ami-01e36b7901e884a10
+      US1604HVM: ami-04781752c9b20ea41
+      WS2012R2: ami-03dd1e9bf68039794
+      AMZNLINUX2: ami-026dea5602e368e96
     us-west-1:
-      CENTOS7HVM: ami-074e2d6769f445be5
-      US1604HVM: ami-094f0176b0d009d9f
-      WS2012R2: ami-094dcbdb1aa24c8da
-      ALINUX2: ami-01eb1709d6ad69035
+      CENTOS7HVM: ami-098f55b4287a885ba
+      US1604HVM: ami-0c1e832407373333f
+      WS2012R2: ami-0cffd49f6b77850ae
+      AMZNLINUX2: ami-04e59c05167ea7bd5
     us-west-2:
-      CENTOS7HVM: ami-01ed306a12b7d1c96
-      US1604HVM: ami-02d0ea44ae3fe9561
-      WS2012R2: ami-0f8967b5f815400c0
-      ALINUX2: ami-0fcd5791ba781e98f
+      CENTOS7HVM: ami-0bc06212a56393ee1
+      US1604HVM: ami-0a4df59262c92cf19
+      WS2012R2: ami-0a80a17ce7f9bea47
+      AMZNLINUX2: ami-0e34e7b9ca0ace12d
   AWSAMINameMap:
     CentOS-7-HVM:
       Code: CENTOS7HVM
@@ -397,9 +404,10 @@ Mappings:
     Windows-Server-2012-R2: 
       Code: WS2012R2
     Amazon-Linux-2:
-      Code: ALINUX2
+      Code: AMZNLINUX2
 
 Conditions:
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   IsWindows: !Equals [ !Ref AMIOS, Windows-Server-2012-R2 ]
   IsLinux: !Not [ Condition: IsWindows ]
   IsUbuntu: !Equals [ !Ref AMIOS,  Ubuntu-Server-16.04-LTS-HVM ]
@@ -411,11 +419,15 @@ Resources:
   LogStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/logging.yaml
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/logging.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         ConfigRecorderName: !Ref ConfigRecorder
         ConfigDeliveryChannelName: !Ref ConfigDeliveryChannel
-        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+        QSS3BucketRegion: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSTagKey: !Ref QSTagKey
         QSTagValue: !Sub ${QSTagValue}-${AWS::StackName}
@@ -425,13 +437,17 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: LogStack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/encrypted-elb.yaml
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/encrypted-elb.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AWSHostedZoneID: !Ref AWSHostedZoneID
         AWSPublicFQDN: !Ref AWSPublicFQDN
         LogBucket: !GetAtt LogStack.Outputs.LogBucket
         PublicSubnetIds: !Join [ ',', !Ref PublicSubnetIds ]
-        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+        QSS3BucketRegion: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSTagKey: !Ref QSTagKey
         QSTagValue: !Sub ${QSTagValue}-${AWS::StackName}
@@ -447,7 +463,10 @@ Resources:
     - ElbStack
     - LogStack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/encrypt-ami.yaml
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/encrypt-ami.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AmiId: !FindInMap [ AWSAMIRegionMap , !Ref "AWS::Region", !FindInMap [ AWSAMINameMap, !Ref AMIOS, Code ] ]
         AmiRegion: !Ref "AWS::Region"
@@ -514,7 +533,10 @@ Resources:
     - ElbStack
     - TableauServerInstanceProfile
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-windows.yaml
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/tableau-server-windows.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AcceptEULA: !Ref AcceptEULA
         ElbTargetGroups: !GetAtt ElbStack.Outputs.ElbTargetGroupHTTPS
@@ -551,7 +573,10 @@ Resources:
     - EncryptAmiStack
     - ElbStack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-ubuntu.yaml
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/tableau-server-ubuntu.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AcceptEULA: !Ref AcceptEULA
         ElbTargetGroups: !GetAtt ElbStack.Outputs.ElbTargetGroupHTTPS
@@ -588,7 +613,10 @@ Resources:
     - EncryptAmiStack
     - ElbStack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/tableau-server-centos-amazonlinux.yaml
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/tableau-server-centos-amazonlinux.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AMIOS: !Ref AMIOS
         AcceptEULA: !Ref AcceptEULA
