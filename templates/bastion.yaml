@@ -151,5 +151,5 @@ Outputs:
     Value: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.RemoteDesktopGatewaySGID, !GetAtt BastionHostLinux.Outputs.BastionSecurityGroupID ]
     Description: Bastion Host Security Group ID 
   BastionPublicIp:
-    Value: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.EIP1, !GetAtt BastionHostLinux.Outputs.EIP1 ]
+    Value: !If [ IsWindows, !GetAtt BastionHostWindows.Outputs.RDPURL, !GetAtt BastionHostLinux.Outputs.EIP1 ]
 
