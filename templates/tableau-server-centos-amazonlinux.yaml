@@ -235,7 +235,6 @@ Resources:
             aws ec2 create-tags --resources $DISK_IDS --tags Key=${QSTagKey},Value=${QSTagValue} --region ${AWS::Region}
 
             # Call Init
-            # ${CfnInitInstall}
             mkdir -p /opt/aws/bin
             yum install -y wget
             wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.zip
