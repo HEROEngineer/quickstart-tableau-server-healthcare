@@ -226,8 +226,13 @@ Resources:
             aws ec2 create-tags --resources $DISK_IDS --tags Key=${QSTagKey},Value=${QSTagValue} --region ${AWS::Region}
 
             # Call Init
-            /usr/bin/easy_install --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
-            /opt/aws/bin/cfn-init --stack '${AWS::StackName}' --resource TableauLaunchConfig --region '${AWS::Region}'
+            mkdir -p /opt/aws/bin
+            wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.zip
+            apt-get install -y python3-daemon
+            apt-get install -y python3-setuptools
+            apt-get install -y python3-pip
+            pip3 install aws-cfn-bootstrap-py3-latest.zip
+            /usr/local/bin/cfn-init --stack '${AWS::StackName}' --resource TableauLaunchConfig --region '${AWS::Region}'
 
             # Machine Configs
             hostnamectl set-hostname $(hostnamectl --static)
