@@ -283,7 +283,7 @@ Resources:
             unset -f tsm_update
 
             # Signal successful completion
-            /opt/aws/bin/cfn-signal -e $? --stack '${AWS::StackName}' --resource TableauASG --region '${AWS::Region}'
+            /usr/local/bin/cfn-signal -e $? --stack '${AWS::StackName}' --resource TableauASG --region '${AWS::Region}'
 
             # Cleanup
             rm -f /tmp/config.json
