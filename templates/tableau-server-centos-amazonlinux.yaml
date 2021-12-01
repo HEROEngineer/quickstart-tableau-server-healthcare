@@ -235,14 +235,20 @@ Resources:
             aws ec2 create-tags --resources $DISK_IDS --tags Key=${QSTagKey},Value=${QSTagValue} --region ${AWS::Region}
 
             # Call Init
-            ${CfnInitInstall}
-            
-            /opt/aws/bin/cfn-init --stack '${AWS::StackName}' --resource TableauLaunchConfig --region '${AWS::Region}' >> /tmp/cfn-init.log 2>&1
-            
+            # ${CfnInitInstall}
+            mkdir -p /opt/aws/bin
+            yum install -y wget
+            wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.zip
+            yum install -y python3
+            yum install -y python3-setuptools
+            yum install -y python3-pip
+            pip3 install aws-cfn-bootstrap-py3-latest.zip
+            /usr/local/bin/cfn-init --stack '${AWS::StackName}' --resource TableauLaunchConfig --region '${AWS::Region}' >> /tmp/cfn-init.log 2>&1
+
             # Machine Configs
             hostnamectl set-hostname $(hostnamectl --static)
             setup_sftp() {
-              source 'tmp/secrets.properties'
+              source '/tmp/secrets.properties'
               useradd -m "$tsm_admin_user"
               echo -e "$tsm_admin_pass\n$tsm_admin_pass" | passwd "$tsm_admin_user" 
             }
@@ -288,7 +294,7 @@ Resources:
             unset -f tsm_update
 
             # Signal successful completion
-            /opt/aws/bin/cfn-signal -e $? --stack '${AWS::StackName}' --resource TableauASG --region '${AWS::Region}'
+            /usr/local/bin/cfn-signal -e $? --stack '${AWS::StackName}' --resource TableauASG --region '${AWS::Region}'
 
             # Cleanup
             #rm -f /tmp/config.json
@@ -297,7 +303,6 @@ Resources:
             #rm -f /tmp/tableau-server.deb
             #rm -f /tmp/automated-installer
           - Trial: !If [ IsTrial, '', !Sub ' -k ${TableauServerLicenseKey} ']
-            CfnInitInstall: !If [ IsAmazonLinux, '', '/usr/bin/easy_install --script-dir /opt/aws/bin https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz' ]
             RootVolMap: !If [ IsAmazonLinux, /dev/xvda, /dev/sda1 ]
 Outputs:
   TableauASG: 
