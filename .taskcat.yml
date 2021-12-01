@@ -118,40 +118,40 @@ tests:
     - us-west-1
     s3_bucket: ''
     template: templates/tableau-server-master.yaml
-  quickstart-tableau-server-healthcaret-windows:
-    parameters:
-      AMIOS: Windows-Server-2012-R2
-      AWSHostedZoneID: Z20J45NCQ1BKQT
-      AWSPublicFQDN: tableau-windows.t.quickstart.awspartner.com
-      AcceptEULA: 'Yes'
-      AvailabilityZones: $[taskcat_genaz_2]
-      BastionAdminCIDR: 10.0.0.0/16
-      InstanceType: m4.4xlarge
-      KeyPairName: $[taskcat_getkeypair]
-      Password: $[taskcat_genpass_12]
-      QSS3BucketName: $[taskcat_autobucket]
-      QSS3BucketRegion: $[taskcat_current_region]
-      QSS3KeyPrefix: quickstart-tableau-server-healthcare/
-      RegCity: Seattle
-      RegCompany: MyCompany
-      RegCountry: USA
-      RegDepartment: Solutions
-      RegEmail: test@example.com
-      RegFirstName: John
-      RegIndustry: Healthcare
-      RegLastName: Smith
-      RegPhone: 888-888-8888
-      RegState: WA
-      RegTitle: Director
-      RegZip: '98101'
-      SourceCIDR: 10.0.0.0/16
-      TableauServerAdminPassword: $[taskcat_genpass_12]
-      TableauServerAdminUser: test
-      TableauServerLicenseKey: ''
-      Username: test
-      WindowsBastionAdmin: StackAdmin
-      WindowsBastionPwd: $[taskcat_genpass_16]
-    regions:
-    - us-east-2
-    s3_bucket: ''
-    template: templates/tableau-server-master.yaml
+#  quickstart-tableau-server-healthcaret-windows:
+#    parameters:
+#      AMIOS: Windows-Server-2012-R2
+#      AWSHostedZoneID: Z20J45NCQ1BKQT
+#      AWSPublicFQDN: tableau-windows.t.quickstart.awspartner.com
+#      AcceptEULA: 'Yes'
+#      AvailabilityZones: $[taskcat_genaz_2]
+#      BastionAdminCIDR: 10.0.0.0/16
+#      InstanceType: m4.4xlarge
+#      KeyPairName: $[taskcat_getkeypair]
+#      Password: $[taskcat_genpass_12]
+#      QSS3BucketName: $[taskcat_autobucket]
+#      QSS3BucketRegion: $[taskcat_current_region]
+#      QSS3KeyPrefix: quickstart-tableau-server-healthcare/
+#      RegCity: Seattle
+#      RegCompany: MyCompany
+#      RegCountry: USA
+#      RegDepartment: Solutions
+#      RegEmail: test@example.com
+#      RegFirstName: John
+#      RegIndustry: Healthcare
+#      RegLastName: Smith
+#      RegPhone: 888-888-8888
+#      RegState: WA
+#      RegTitle: Director
+#      RegZip: '98101'
+#      SourceCIDR: 10.0.0.0/16
+#      TableauServerAdminPassword: $[taskcat_genpass_12]
+#      TableauServerAdminUser: test
+#      TableauServerLicenseKey: ''
+#      Username: test
+#      WindowsBastionAdmin: StackAdmin
+#      WindowsBastionPwd: $[taskcat_genpass_16]
+#    regions:
+#    - us-east-2
+#    s3_bucket: ''
+#    template: templates/tableau-server-master.yaml
